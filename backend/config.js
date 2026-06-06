@@ -13,6 +13,7 @@ const CONFIG = {
   supabaseUrl: process.env.SUPABASE_URL || '',
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   adminPlanKey: process.env.ADMIN_PLAN_KEY || '',
+  allowDevOtp: process.env.ALLOW_DEV_OTP === 'true' || (!process.env.RENDER && process.env.NODE_ENV !== 'production'),
 };
 
 module.exports = { CONFIG };

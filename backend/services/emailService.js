@@ -24,8 +24,11 @@ async function sendOtpEmail({ to, code, purpose }) {
 
   if (CONFIG.emailProvider === 'gmail') {
     if (!CONFIG.gmailUser || !CONFIG.gmailAppPassword) {
-      console.log(`[DEV OTP] ${to} ${purpose}: ${code}`);
-      return { sent: false, devOtp: code };
+      if (CONFIG.allowDevOtp) {
+        console.log(`[DEV OTP] ${to} ${purpose}: ${code}`);
+        return { sent: false, devOtp: code };
+      }
+      throw new Error('Chưa cấu hình Gmail SMTP để gửi mã xác thực.');
     }
 
     const transporter = nodemailer.createTransport({
@@ -50,8 +53,11 @@ async function sendOtpEmail({ to, code, purpose }) {
   }
 
   if (!CONFIG.resendApiKey) {
-    console.log(`[DEV OTP] ${to} ${purpose}: ${code}`);
-    return { sent: false, devOtp: code };
+    if (CONFIG.allowDevOtp) {
+      console.log(`[DEV OTP] ${to} ${purpose}: ${code}`);
+      return { sent: false, devOtp: code };
+    }
+    throw new Error('Chưa cấu hình Resend API key để gửi mã xác thực.');
   }
 
   const response = await fetch('https://api.resend.com/emails', {
