@@ -56,6 +56,57 @@ async function sendOtpEmail({ to, code, purpose }) {
     return { sent: true };
   }
 
+  if (CONFIG.emailProvider === 'emailjs') {
+    if (!CONFIG.emailjsServiceId || !CONFIG.emailjsTemplateId || !CONFIG.emailjsPublicKey) {
+      if (CONFIG.allowDevOtp) {
+        console.log(`[DEV OTP] ${to} ${purpose}: ${code}`);
+        return { sent: false, devOtp: code };
+      }
+      throw new Error('Chưa cấu hình EmailJS để gửi mã xác thực.');
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    let response;
+    try {
+      response = await fetch('https://api.emailjs.com/api/v1.0/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          service_id: CONFIG.emailjsServiceId,
+          template_id: CONFIG.emailjsTemplateId,
+          user_id: CONFIG.emailjsPublicKey,
+          accessToken: CONFIG.emailjsPrivateKey || undefined,
+          template_params: {
+            to_email: to,
+            user_email: to,
+            email: to,
+            otp_code: code,
+            code,
+            purpose,
+            subject,
+            message: text,
+          },
+        }),
+      });
+    } catch (err) {
+      if (err.name === 'AbortError') {
+        throw new Error('Kết nối EmailJS quá lâu. Vui lòng thử lại sau.');
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`EmailJS error: ${text}`);
+    }
+
+    return { sent: true };
+  }
+
   if (!CONFIG.resendApiKey) {
     if (CONFIG.allowDevOtp) {
       console.log(`[DEV OTP] ${to} ${purpose}: ${code}`);
