@@ -10,6 +10,8 @@ const CONFIG = {
   emailFrom: process.env.EMAIL_FROM || 'XCapital AI <onboarding@resend.dev>',
   gmailUser: process.env.GMAIL_USER || '',
   gmailAppPassword: process.env.GMAIL_APP_PASSWORD || '',
+  gmailSmtpHost: process.env.GMAIL_SMTP_HOST || 'smtp.gmail.com',
+  gmailSmtpPort: Number(process.env.GMAIL_SMTP_PORT || 587),
   supabaseUrl: process.env.SUPABASE_URL || '',
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   adminPlanKey: process.env.ADMIN_PLAN_KEY || '',

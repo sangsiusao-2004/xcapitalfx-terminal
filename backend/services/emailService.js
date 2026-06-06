@@ -32,9 +32,10 @@ async function sendOtpEmail({ to, code, purpose }) {
     }
 
     const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 465,
-      secure: true,
+      host: CONFIG.gmailSmtpHost,
+      port: CONFIG.gmailSmtpPort,
+      secure: CONFIG.gmailSmtpPort === 465,
+      requireTLS: CONFIG.gmailSmtpPort !== 465,
       connectionTimeout: 10000,
       greetingTimeout: 10000,
       socketTimeout: 15000,
