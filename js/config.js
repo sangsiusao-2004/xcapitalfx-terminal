@@ -2,11 +2,15 @@
 //  TRADEX AI - CENTRAL CONFIG
 // =====================================================
 
-const browserLocation = typeof window !== 'undefined' ? window.location : { port: '' };
+const browserLocation = typeof window !== 'undefined'
+  ? window.location
+  : { hostname: '', port: '' };
+
+const isLocalBrowser = ['localhost', '127.0.0.1'].includes(browserLocation.hostname);
 
 export const CONFIG = {
-  // Same-origin when served by backend; Live Server still calls the local backend.
-  API_BASE_URL: browserLocation.port === '3000' ? '' : 'http://localhost:3000',
+  // Same-origin on production; Live Server still calls the local backend.
+  API_BASE_URL: isLocalBrowser && browserLocation.port !== '3000' ? 'http://localhost:3000' : '',
 
   WATCH_SYMBOLS: [
     { sym: 'XAUUSD',   label: 'XAU/USD',  market: 'xauusd' },
