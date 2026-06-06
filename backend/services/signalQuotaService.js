@@ -20,14 +20,18 @@ function supabaseBaseUrl() {
 }
 
 async function supabaseRequest(method, table, query = '', body) {
+  const headers = {
+    apikey: CONFIG.supabaseServiceRoleKey,
+    'Content-Type': 'application/json',
+    Prefer: method === 'POST' ? 'resolution=merge-duplicates,return=representation' : 'return=representation',
+  };
+  if (!CONFIG.supabaseServiceRoleKey.startsWith('sb_secret_')) {
+    headers.Authorization = `Bearer ${CONFIG.supabaseServiceRoleKey}`;
+  }
+
   const res = await fetch(`${supabaseBaseUrl()}/rest/v1/${table}${query}`, {
     method,
-    headers: {
-      apikey: CONFIG.supabaseServiceRoleKey,
-      Authorization: `Bearer ${CONFIG.supabaseServiceRoleKey}`,
-      'Content-Type': 'application/json',
-      Prefer: method === 'POST' ? 'resolution=merge-duplicates,return=representation' : 'return=representation',
-    },
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   });
 

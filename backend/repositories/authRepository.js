@@ -22,9 +22,11 @@ async function supabaseRequest(method, table, query = '', body) {
   const url = `${supabaseBaseUrl()}/rest/v1/${table}${query}`;
   const headers = {
     apikey: CONFIG.supabaseServiceRoleKey,
-    Authorization: `Bearer ${CONFIG.supabaseServiceRoleKey}`,
     'Content-Type': 'application/json',
   };
+  if (!CONFIG.supabaseServiceRoleKey.startsWith('sb_secret_')) {
+    headers.Authorization = `Bearer ${CONFIG.supabaseServiceRoleKey}`;
+  }
 
   if (method === 'POST') {
     headers.Prefer = 'resolution=merge-duplicates,return=representation';
