@@ -35,9 +35,12 @@ async function sendOtpEmail({ to, code, purpose }) {
       host: 'smtp.gmail.com',
       port: 465,
       secure: true,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 15000,
       auth: {
         user: CONFIG.gmailUser,
-        pass: CONFIG.gmailAppPassword,
+        pass: CONFIG.gmailAppPassword.replace(/\s+/g, ''),
       },
     });
 

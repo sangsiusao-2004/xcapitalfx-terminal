@@ -385,15 +385,36 @@ input::placeholder { color: var(--muted); }
 if (sessionStorage.getItem('tx_auth')) window.location.href = 'index.html';
 
 async function postApi(path, body) {
-  const res = await fetch(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const payload = await res.json();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20000);
+  let res;
+  try {
+    res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('Gửi mã quá lâu. Vui lòng kiểm tra cấu hình email trên server rồi thử lại.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  let payload = {};
+  try {
+    payload = await res.json();
+  } catch (err) {
+    throw new Error('Máy chủ không trả về JSON hợp lệ');
+  }
+
   if (!res.ok || payload.ok === false) {
     throw new Error(payload.error?.message || 'API error');
   }
+
   return payload.data;
 }
 
