@@ -60,7 +60,12 @@ async function sendOtp({ email, name, purpose = 'register' }) {
     createdAt: new Date().toISOString(),
   });
 
-  const delivery = await emailService.sendOtpEmail({ to: normalizedEmail, code, purpose });
+  const delivery = await emailService.sendOtpEmail({
+    to: normalizedEmail,
+    name: String(name || '').trim(),
+    code,
+    purpose,
+  });
   return {
     email: normalizedEmail,
     sent: delivery.sent,

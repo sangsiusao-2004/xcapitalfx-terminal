@@ -18,9 +18,10 @@ function renderOtpEmail({ code, purpose }) {
   };
 }
 
-async function sendOtpEmail({ to, code, purpose }) {
+async function sendOtpEmail({ to, name, code, purpose }) {
   const { subject, html } = renderOtpEmail({ code, purpose });
   const text = `Ma xac thuc XCapital AI cua ban la: ${code}. Ma co hieu luc trong 10 phut.`;
+  const displayName = String(name || '').trim() || to;
 
   if (CONFIG.emailProvider === 'gmail') {
     if (!CONFIG.gmailUser || !CONFIG.gmailAppPassword) {
@@ -80,6 +81,8 @@ async function sendOtpEmail({ to, code, purpose }) {
           accessToken: CONFIG.emailjsPrivateKey || undefined,
           template_params: {
             to_email: to,
+            to_name: displayName,
+            name: displayName,
             user_email: to,
             email: to,
             otp_code: code,
