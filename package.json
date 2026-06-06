@@ -1,0 +1,12 @@
+{
+  "name": "tradex-terminal",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "nodemailer": "^8.0.10"
+  }
+}

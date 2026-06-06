@@ -1,0 +1,4 @@
+data/auth-store.json
+data/signal-usage.json
+node_modules/
+.env

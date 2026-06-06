@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xcapital AI — Đăng nhập</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:     #080c10;
+  --bg2:    #0d1318;
+  --bg3:    #111820;
+  --border: rgba(0,200,150,0.15);
+  --border2:rgba(0,200,150,0.3);
+  --accent: #00c896;
+  --accent2:#00e5b0;
+  --red:    #ff4757;
+  --green:  #00c896;
+  --text:   #e0f0ea;
+  --muted:  #5a7a70;
+  --mono:   'Share Tech Mono', 'Be Vietnam Pro', monospace;
+  --head:   'Rajdhani', 'Be Vietnam Pro', sans-serif;
+  --body:   'Inter', 'Be Vietnam Pro', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Grid background */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,200,150,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,200,150,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none; z-index: 0;
+}
+/* Glow orb */
+body::after {
+  content: '';
+  position: fixed;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(0,200,150,0.06) 0%, transparent 70%);
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none; z-index: 0;
+}
+
+.scan-line {
+  position: fixed; top: -2px; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  animation: scan 4s linear infinite; opacity: 0.4; z-index: 1;
+}
+@keyframes scan { 0% { top: -2px; } 100% { top: 100vh; } }
+
+.container {
+  position: relative; z-index: 2;
+  width: 100%; max-width: 440px;
+  padding: 2rem 1.5rem;
+}
+
+/* Logo */
+.logo-area { text-align: center; margin-bottom: 2rem; }
+.logo-icon {
+  width: 56px; height: 56px;
+  border: 1px solid var(--border2); border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-bottom: 1rem;
+  background: rgba(0,200,150,0.05);
+  position: relative; overflow: hidden;
+}
+.logo-icon::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(0,200,150,0.1), transparent);
+}
+.logo-icon svg { width: 28px; height: 28px; stroke: var(--accent); fill: none; stroke-width: 1.5; }
+.logo-name { font-family: var(--head); font-size: 28px; font-weight: 700; letter-spacing: 3px; color: var(--text); }
+.logo-name span { color: var(--accent); }
+.logo-sub { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 2px; margin-top: 4px; }
+
+/* Card */
+.card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 2rem;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.6;
+}
+
+.card-header { margin-bottom: 1.5rem; }
+.card-title { font-family: var(--head); font-size: 18px; font-weight: 600; letter-spacing: 1px; color: var(--text); margin-bottom: 4px; }
+.card-sub { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+/* Form */
+.form-group { margin-bottom: 1.1rem; }
+label { display: block; font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 6px; }
+
+input[type=text], input[type=email], input[type=password] {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px; color: var(--text);
+  font-family: var(--mono); font-size: 13px; outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,200,150,0.1); }
+input::placeholder { color: var(--muted); }
+
+.input-wrap { position: relative; }
+.input-wrap input { padding-right: 52px; }
+.toggle-pw {
+  position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 11px; font-family: var(--mono); letter-spacing: 0.5px; transition: color 0.2s;
+}
+.toggle-pw:hover { color: var(--accent); }
+
+/* OTP row */
+.otp-row { display: flex; gap: 8px; }
+.otp-row input { letter-spacing: 4px; font-weight: 700; }
+.btn-otp {
+  white-space: nowrap; flex-shrink: 0;
+  background: rgba(0,200,150,0.08); border: 1px solid var(--border2);
+  border-radius: 8px; color: var(--accent);
+  font-family: var(--mono); font-size: 11px; font-weight: 600;
+  padding: 0 14px; cursor: pointer; transition: all 0.2s; min-width: 82px;
+}
+.btn-otp:hover { background: rgba(0,200,150,0.16); }
+.btn-otp:disabled { opacity: 0.4; cursor: not-allowed; }
+.otp-countdown { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: right; margin-top: 4px; min-height: 15px; }
+
+/* Main button */
+.btn-main {
+  width: 100%; background: var(--accent); border: none; border-radius: 8px;
+  padding: 13px; color: #080c10; font-family: var(--head); font-size: 15px;
+  font-weight: 700; letter-spacing: 2px; cursor: pointer; margin-top: 0.5rem;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s; position: relative; overflow: hidden;
+}
+.btn-main:hover { background: var(--accent2); box-shadow: 0 0 20px rgba(0,200,150,0.3); }
+.btn-main:active { transform: scale(0.98); }
+.btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Alerts */
+.alert {
+  display: none; border-radius: 6px; padding: 10px 14px;
+  font-size: 11px; color: var(--red); font-family: var(--mono); margin-bottom: 1rem;
+  background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3);
+}
+.alert.show { display: block; }
+.alert.success { background: rgba(0,200,150,0.08); border-color: rgba(0,200,150,0.3); color: var(--accent); }
+.alert.info    { background: rgba(0,200,150,0.05); border-color: rgba(0,200,150,0.2); color: var(--muted); }
+
+/* Switch link */
+.switch-row { text-align: center; margin-top: 1.2rem; font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.switch-row a { color: var(--accent); cursor: pointer; text-decoration: none; }
+.switch-row a:hover { color: var(--accent2); }
+
+/* Footer note */
+.footer-note { text-align: center; margin-top: 1.4rem; font-size: 11px; color: var(--muted); font-family: var(--mono); line-height: 1.8; }
+.footer-note strong { color: var(--accent); }
+
+/* View toggling */
+#view-login, #view-register, #view-forgot, #view-reset { display: none; }
+#view-login.active, #view-register.active, #view-forgot.active, #view-reset.active { display: block; }
+
+.step-note {
+  background: rgba(0,200,150,0.05);
+  border: 1px solid rgba(0,200,150,0.18);
+  border-radius: 8px;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.6;
+  margin-bottom: 1.1rem;
+  padding: 10px 12px;
+}
+
+/* Status bar */
+.status-bar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--bg2); border-top: 1px solid var(--border);
+  padding: 6px 20px; display: flex; gap: 24px;
+  font-family: var(--mono); font-size: 10px; color: var(--muted); z-index: 10;
+}
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-right: 6px; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+.status-item { display: flex; align-items: center; }
+</style>
+</head>
+<body>
+<div class="scan-line"></div>
+
+<div class="container">
+  <div class="logo-area">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+    </div>
+    <div class="logo-name"><span>X</span> Capital</div>
+    <div class="logo-sub">AI TRADING TERMINAL · SECURE ACCESS</div>
+  </div>
+
+  <!-- ===== ĐĂNG NHẬP ===== -->
+  <div id="view-login" class="active">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">ĐĂNG NHẬP HỆ THỐNG</div>
+        <div class="card-sub">// AUTHENTICATION REQUIRED</div>
+      </div>
+
+      <div id="login-alert" class="alert"></div>
+
+      <div class="form-group">
+        <label>Email / Tên đăng nhập</label>
+        <input type="text" id="login-user" placeholder="email hoặc username" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <div class="input-wrap">
+          <input type="password" id="login-pw" placeholder="••••••••">
+          <button class="toggle-pw" onclick="togglePw('login-pw',this)">HIỆN</button>
+        </div>
+      </div>
+
+      <button class="btn-main" onclick="doLogin()">→ TRUY CẬP HỆ THỐNG</button>
+
+      <div class="switch-row" style="margin-top:0.9rem">
+        <a onclick="switchView('forgot')">Quên mật khẩu?</a>
+      </div>
+      <div class="switch-row" style="margin-top:0.8rem">
+        Chưa có tài khoản? <a onclick="switchView('register')">Đăng ký ngay</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== QUÊN MẬT KHẨU ===== -->
+  <div id="view-forgot">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">QUÊN MẬT KHẨU</div>
+        <div class="card-sub">// EMAIL VERIFICATION REQUIRED</div>
+      </div>
+
+      <div id="forgot-alert" class="alert"></div>
+
+      <div class="step-note">
+        Nhập email đã đăng ký, nhận mã xác thực rồi bấm XÁC MINH để chuyển sang bước tạo mật khẩu mới.
+      </div>
+
+      <div class="form-group">
+        <label>Email tài khoản</label>
+        <input type="email" id="forgot-email" placeholder="email@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Mã xác thực</label>
+        <div class="otp-row">
+          <input type="text" id="forgot-otp" placeholder="_ _ _ _ _ _" maxlength="6">
+          <button class="btn-otp" id="btn-forgot-otp" onclick="sendForgotOTP()">GỬI MÃ</button>
+        </div>
+        <div class="otp-countdown" id="forgot-otp-cd"></div>
+      </div>
+
+      <button class="btn-main" onclick="verifyForgotOTP()">→ XÁC MINH EMAIL</button>
+
+      <div class="switch-row">
+        Đã nhớ mật khẩu? <a onclick="switchView('login')">Quay lại đăng nhập</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TẠO MẬT KHẨU MỚI ===== -->
+  <div id="view-reset">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">TẠO MẬT KHẨU MỚI</div>
+        <div class="card-sub">// RESET AUTH CREDENTIAL</div>
+      </div>
+
+      <div id="reset-alert" class="alert"></div>
+
+      <div class="form-group">
+        <label>Email đã xác minh</label>
+        <input type="email" id="reset-email" readonly>
+        <input type="hidden" id="reset-otp">
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu mới</label>
+        <div class="input-wrap">
+          <input type="password" id="reset-pw" placeholder="Tối thiểu 6 ký tự">
+          <button class="toggle-pw" onclick="togglePw('reset-pw',this)">HIỆN</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Xác nhận mật khẩu mới</label>
+        <div class="input-wrap">
+          <input type="password" id="reset-pw2" placeholder="Nhập lại mật khẩu mới">
+          <button class="toggle-pw" onclick="togglePw('reset-pw2',this)">HIỆN</button>
+        </div>
+      </div>
+
+      <button class="btn-main" onclick="resetPassword()">→ CẬP NHẬT MẬT KHẨU</button>
+
+      <div class="switch-row">
+        Đã nhớ mật khẩu? <a onclick="switchView('login')">Quay lại đăng nhập</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ĐĂNG KÝ ===== -->
+  <div id="view-register">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">TẠO TÀI KHOẢN</div>
+        <div class="card-sub">// NEW USER REGISTRATION</div>
+      </div>
+
+      <div id="reg-alert" class="alert"></div>
+
+      <div class="form-group">
+        <label>Họ và tên</label>
+        <input type="text" id="reg-name" placeholder="Nguyễn Văn A">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="reg-email" placeholder="email@example.com">
+      </div>
+      <div class="form-group">
+        <label>Mã xác thực</label>
+        <div class="otp-row">
+          <input type="text" id="reg-otp" placeholder="_ _ _ _ _ _" maxlength="6">
+          <button class="btn-otp" id="btn-otp" onclick="sendOTP()">GỬI MÃ</button>
+        </div>
+        <div class="otp-countdown" id="otp-cd"></div>
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <div class="input-wrap">
+          <input type="password" id="reg-pw" placeholder="Tối thiểu 6 ký tự">
+          <button class="toggle-pw" onclick="togglePw('reg-pw',this)">HIỆN</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Xác nhận mật khẩu</label>
+        <div class="input-wrap">
+          <input type="password" id="reg-pw2" placeholder="Nhập lại mật khẩu">
+          <button class="toggle-pw" onclick="togglePw('reg-pw2',this)">HIỆN</button>
+        </div>
+      </div>
+
+      <button class="btn-main" onclick="doRegister()">→ ĐĂNG KÝ TÀI KHOẢN</button>
+
+      <div class="switch-row">
+        Đã có tài khoản? <a onclick="switchView('login')">Đăng nhập</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Status bar -->
+<div class="status-bar">
+  <span class="status-item"><span class="status-dot"></span>HỆ THỐNG TRỰC TUYẾN</span>
+  <span class="status-item" id="clock"></span>
+  <span class="status-item">v1.0.0 · XCAPITAL AI</span>
+</div>
+
+<script>
+// =====================================================
+// =====================================================
+// =====================================================
+
+
+// ---- Redirect nếu đã đăng nhập ----
+if (sessionStorage.getItem('tx_auth')) window.location.href = 'index.html';
+
+async function postApi(path, body) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const payload = await res.json();
+  if (!res.ok || payload.ok === false) {
+    throw new Error(payload.error?.message || 'API error');
+  }
+  return payload.data;
+}
+
+// ---- Clock ----
+setInterval(() => {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('vi-VN', { hour12: false });
+}, 1000);
+
+// ---- View switching ----
+function switchView(v) {
+  document.getElementById('view-login').classList.toggle('active', v === 'login');
+  document.getElementById('view-register').classList.toggle('active', v === 'register');
+  document.getElementById('view-forgot').classList.toggle('active', v === 'forgot');
+  document.getElementById('view-reset').classList.toggle('active', v === 'reset');
+  clearAlert('login-alert'); clearAlert('reg-alert');
+  clearAlert('forgot-alert'); clearAlert('reset-alert');
+}
+
+// ---- Alert helpers ----
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = 'alert ' + (type||'error') + ' show';
+}
+function clearAlert(id) {
+  const el = document.getElementById(id);
+  el.className = 'alert'; el.textContent = '';
+}
+
+// ---- Toggle password ----
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? 'HIỆN' : 'ẨN';
+}
+
+// ---- OTP ----
+let otpCode = '', otpEmail = '', cdTimer = null;
+let forgotOtpCode = '', forgotOtpEmail = '', forgotCdTimer = null;
+
+async function sendOTP() {
+  const email = document.getElementById('reg-email').value.trim();
+  const name = document.getElementById('reg-name').value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showAlert('reg-alert', '⚠ Vui lòng nhập email hợp lệ trước'); return;
+  }
+
+  otpEmail = email;
+  const btn = document.getElementById('btn-otp');
+  btn.disabled = true; btn.textContent = '...';
+
+  try {
+    const data = await postApi('/api/auth/send-otp', { email, name, purpose: 'register' });
+    if (data.devOtp) {
+      otpCode = data.devOtp;
+      showAlert('reg-alert', '✓ Chế độ local: mã xác thực là ' + data.devOtp, 'success');
+    } else {
+      otpCode = '';
+      showAlert('reg-alert', '✓ Mã đã gửi đến ' + email + ' — kiểm tra cả Spam', 'success');
+    }
+    startCd(120);
+  } catch(e) {
+    showAlert('reg-alert', '✗ ' + (e.message || 'Gửi mã thất bại'));
+    btn.disabled = false; btn.textContent = 'GỬI MÃ';
+  }
+}
+function startCd(sec) {
+  const btn = document.getElementById('btn-otp');
+  const cd  = document.getElementById('otp-cd');
+  clearInterval(cdTimer); let s = sec;
+  cdTimer = setInterval(() => {
+    cd.textContent = 'Gửi lại sau ' + s + 's'; s--;
+    if (s < 0) {
+      clearInterval(cdTimer); cd.textContent = '';
+      btn.disabled = false; btn.textContent = 'GỬI LẠI';
+    }
+  }, 1000);
+}
+
+async function sendForgotOTP() {
+  const email = document.getElementById('forgot-email').value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showAlert('forgot-alert', '⚠ Vui lòng nhập email hợp lệ'); return;
+  }
+
+  forgotOtpEmail = email;
+  const btn = document.getElementById('btn-forgot-otp');
+  btn.disabled = true; btn.textContent = '...';
+
+  try {
+    const data = await postApi('/api/auth/send-otp', { email, purpose: 'reset_password' });
+    if (data.devOtp) {
+      forgotOtpCode = data.devOtp;
+      showAlert('forgot-alert', '✓ Chế độ local: mã xác thực là ' + data.devOtp, 'success');
+    } else {
+      forgotOtpCode = '';
+      showAlert('forgot-alert', '✓ Mã xác thực đã gửi đến ' + email, 'success');
+    }
+    startForgotCd(120);
+  } catch(e) {
+    showAlert('forgot-alert', '✗ ' + (e.message || 'Gửi mã thất bại'));
+    btn.disabled = false; btn.textContent = 'GỬI MÃ';
+  }
+}
+function startForgotCd(sec) {
+  const btn = document.getElementById('btn-forgot-otp');
+  const cd  = document.getElementById('forgot-otp-cd');
+  clearInterval(forgotCdTimer); let s = sec;
+  forgotCdTimer = setInterval(() => {
+    cd.textContent = 'Gửi lại sau ' + s + 's'; s--;
+    if (s < 0) {
+      clearInterval(forgotCdTimer); cd.textContent = '';
+      btn.disabled = false; btn.textContent = 'GỬI LẠI';
+    }
+  }, 1000);
+}
+
+function verifyForgotOTP() {
+  const email = document.getElementById('forgot-email').value.trim();
+  const otp = document.getElementById('forgot-otp').value.trim();
+
+  if (!email) { showAlert('forgot-alert', '⚠ Vui lòng nhập email'); return; }
+  if (!otp) { showAlert('forgot-alert', '⚠ Vui lòng nhập mã xác thực'); return; }
+
+  document.getElementById('reset-email').value = email;
+  document.getElementById('reset-otp').value = otp;
+  document.getElementById('reset-pw').value = '';
+  document.getElementById('reset-pw2').value = '';
+  switchView('reset');
+  showAlert('reset-alert', '✓ Email đã sẵn sàng xác minh. Vui lòng tạo mật khẩu mới.', 'success');
+}
+async function resetPassword() {
+  const email = document.getElementById('reset-email').value.trim();
+  const otp = document.getElementById('reset-otp').value.trim();
+  const pw = document.getElementById('reset-pw').value;
+  const pw2 = document.getElementById('reset-pw2').value;
+
+  if (!otp) { showAlert('reset-alert', '⚠ Thiếu mã xác thực'); return; }
+  if (pw.length < 6) { showAlert('reset-alert', '⚠ Mật khẩu mới tối thiểu 6 ký tự'); return; }
+  if (pw !== pw2) { showAlert('reset-alert', '✗ Mật khẩu xác nhận không khớp'); return; }
+
+  try {
+    await postApi('/api/auth/reset-password', { email, otp, password: pw });
+    forgotOtpCode = ''; forgotOtpEmail = '';
+    showAlert('reset-alert', '✓ Cập nhật mật khẩu thành công. Đang quay lại đăng nhập...', 'success');
+    setTimeout(() => {
+      switchView('login');
+      document.getElementById('login-user').value = email;
+      document.getElementById('login-pw').value = '';
+    }, 1400);
+  } catch(e) {
+    showAlert('reset-alert', '✗ ' + (e.message || 'Không thể cập nhật mật khẩu'));
+  }
+}
+// ---- Register ----
+async function doRegister() {
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const otp = document.getElementById('reg-otp').value.trim();
+  const pw = document.getElementById('reg-pw').value;
+  const pw2 = document.getElementById('reg-pw2').value;
+
+  if (!name) { showAlert('reg-alert', '⚠ Vui lòng nhập họ và tên'); return; }
+  if (!email) { showAlert('reg-alert', '⚠ Vui lòng nhập email'); return; }
+  if (!otp) { showAlert('reg-alert', '⚠ Vui lòng nhập mã xác thực'); return; }
+  if (pw.length < 6) { showAlert('reg-alert', '⚠ Mật khẩu tối thiểu 6 ký tự'); return; }
+  if (pw !== pw2) { showAlert('reg-alert', '✗ Mật khẩu xác nhận không khớp'); return; }
+
+  try {
+    await postApi('/api/auth/register', { name, email, password: pw, otp });
+    otpCode = '';
+    showAlert('reg-alert', '✓ Đăng ký thành công! Đang chuyển sang đăng nhập...', 'success');
+    setTimeout(() => {
+      switchView('login');
+      document.getElementById('login-user').value = email;
+      document.getElementById('login-pw').value = '';
+    }, 1200);
+  } catch(e) {
+    showAlert('reg-alert', '✗ ' + (e.message || 'Đăng ký thất bại'));
+  }
+}
+// ---- Login ----
+async function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const pw = document.getElementById('login-pw').value;
+  if (!u || !pw) { showAlert('login-alert', '⚠ Vui lòng nhập đầy đủ thông tin'); return; }
+
+  try {
+    const user = await postApi('/api/auth/login', { user: u, password: pw });
+    login(user);
+  } catch(e) {
+    showAlert('login-alert', '✗ ' + (e.message || 'Sai tên đăng nhập hoặc mật khẩu'));
+    document.getElementById('login-pw').value = '';
+  }
+}
+function login(user) {
+  sessionStorage.setItem('tx_auth', '1');
+  sessionStorage.setItem('tx_user', JSON.stringify(user));
+  window.location.href = 'index.html';
+}
+
+// ---- Enter key ----
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('view-login').classList.contains('active')) doLogin();
+  else if (document.getElementById('view-register').classList.contains('active')) doRegister();
+  else if (document.getElementById('view-forgot').classList.contains('active')) verifyForgotOTP();
+  else if (document.getElementById('view-reset').classList.contains('active')) resetPassword();
+});
+</script>
+</body>
+</html>

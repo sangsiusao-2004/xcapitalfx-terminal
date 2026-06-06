@@ -1,0 +1,18 @@
+const CONFIG = {
+  port: Number(process.env.PORT || 3000),
+  binanceBaseUrl: process.env.BINANCE_BASE_URL || 'https://api.binance.com',
+  tradingViewScannerBaseUrl: process.env.TRADINGVIEW_SCANNER_BASE_URL || 'https://scanner.tradingview.com',
+  anthropicBaseUrl: process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com',
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+  anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+  emailProvider: process.env.EMAIL_PROVIDER || 'resend',
+  resendApiKey: process.env.RESEND_API_KEY || '',
+  emailFrom: process.env.EMAIL_FROM || 'XCapital AI <onboarding@resend.dev>',
+  gmailUser: process.env.GMAIL_USER || '',
+  gmailAppPassword: process.env.GMAIL_APP_PASSWORD || '',
+  supabaseUrl: process.env.SUPABASE_URL || '',
+  supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
+  adminPlanKey: process.env.ADMIN_PLAN_KEY || '',
+};
+
+module.exports = { CONFIG };

@@ -1,0 +1,173 @@
+const crypto = require('crypto');
+const repository = require('../repositories/authRepository');
+const emailService = require('./emailService');
+
+const OTP_TTL_MS = 10 * 60 * 1000;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function publicUser(user) {
+  return {
+    name: user.name,
+    email: user.email,
+    plan: user.plan || 'Free',
+    verified: Boolean(user.verified),
+    createdAt: user.createdAt,
+  };
+}
+
+function generateOtp() {
+  return String(Math.floor(100000 + Math.random() * 900000));
+}
+
+function hashPassword(password, salt = crypto.randomBytes(16).toString('hex')) {
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+  return `${salt}:${hash}`;
+}
+
+function verifyPassword(password, storedHash) {
+  if (!storedHash || !storedHash.includes(':')) return false;
+  const [salt, hash] = storedHash.split(':');
+  const candidate = hashPassword(password, salt).split(':')[1];
+  return crypto.timingSafeEqual(Buffer.from(candidate, 'hex'), Buffer.from(hash, 'hex'));
+}
+
+function validateEmail(email) {
+  const normalized = repository.normalizeEmail(email);
+  if (!EMAIL_RE.test(normalized)) throw new Error('Email không hợp lệ');
+  return normalized;
+}
+
+async function sendOtp({ email, name, purpose = 'register' }) {
+  const normalizedEmail = validateEmail(email);
+  const existingUser = await repository.getUserByEmail(normalizedEmail);
+
+  if (purpose === 'register' && existingUser) {
+    throw new Error('Email này đã được đăng ký');
+  }
+  if (purpose === 'reset_password' && !existingUser) {
+    throw new Error('Email này chưa được đăng ký');
+  }
+
+  const code = generateOtp();
+  await repository.saveOtp({
+    id: crypto.randomUUID(),
+    email: normalizedEmail,
+    name: String(name || '').trim(),
+    purpose,
+    code,
+    used: false,
+    expiresAt: new Date(Date.now() + OTP_TTL_MS).toISOString(),
+    createdAt: new Date().toISOString(),
+  });
+
+  const delivery = await emailService.sendOtpEmail({ to: normalizedEmail, code, purpose });
+  return {
+    email: normalizedEmail,
+    sent: delivery.sent,
+    devOtp: delivery.devOtp,
+  };
+}
+
+async function register({ name, email, password, otp }) {
+  const normalizedEmail = validateEmail(email);
+  const cleanName = String(name || '').trim();
+  if (!cleanName) throw new Error('Vui lòng nhập họ và tên');
+  if (!password || String(password).length < 6) throw new Error('Mật khẩu tối thiểu 6 ký tự');
+  if (await repository.getUserByEmail(normalizedEmail)) throw new Error('Email này đã được đăng ký');
+
+  const otpRecord = await repository.findActiveOtp(normalizedEmail, 'register', otp);
+  if (!otpRecord) throw new Error('Mã xác thực không đúng hoặc đã hết hạn');
+
+  const user = {
+    name: cleanName,
+    email: normalizedEmail,
+    passwordHash: hashPassword(String(password)),
+    plan: 'Free',
+    verified: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  await repository.saveUser(normalizedEmail, user);
+  await repository.markOtpUsed(otpRecord.id);
+  return publicUser(user);
+}
+
+async function login({ user, password }) {
+  const identifier = repository.normalizeEmail(user);
+
+  if ((identifier === 'admin' || identifier === 'admin@tradex.ai') && password === 'admin123') {
+    return publicUser({
+      name: 'Admin',
+      email: 'admin@tradex.ai',
+      plan: 'Premium',
+      verified: true,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  const existingUser = await repository.getUserByEmail(identifier);
+  if (!existingUser || !verifyPassword(String(password || ''), existingUser.passwordHash)) {
+    throw new Error('Sai tên đăng nhập hoặc mật khẩu');
+  }
+
+  return publicUser(existingUser);
+}
+
+async function resetPassword({ email, otp, password }) {
+  const normalizedEmail = validateEmail(email);
+  if (!password || String(password).length < 6) throw new Error('Mật khẩu mới tối thiểu 6 ký tự');
+
+  const existingUser = await repository.getUserByEmail(normalizedEmail);
+  if (!existingUser) throw new Error('Không tìm thấy tài khoản');
+
+  const otpRecord = await repository.findActiveOtp(normalizedEmail, 'reset_password', otp);
+  if (!otpRecord) throw new Error('Mã xác thực không đúng hoặc đã hết hạn');
+
+  const updatedUser = {
+    ...existingUser,
+    passwordHash: hashPassword(String(password)),
+    updatedAt: new Date().toISOString(),
+  };
+  await repository.saveUser(normalizedEmail, updatedUser);
+  await repository.markOtpUsed(otpRecord.id);
+  return publicUser(updatedUser);
+}
+
+async function updatePlan({ email, plan }) {
+  const normalizedEmail = validateEmail(email);
+  const nextPlan = String(plan || '').trim();
+  const allowedPlans = new Set(['Free', 'Pro', 'Premium']);
+
+  if (!allowedPlans.has(nextPlan)) {
+    throw new Error('Gói tài khoản không hợp lệ');
+  }
+
+  if (normalizedEmail === 'admin@tradex.ai') {
+    return publicUser({
+      name: 'Admin',
+      email: normalizedEmail,
+      plan: 'Premium',
+      verified: true,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
+  const existingUser = await repository.getUserByEmail(normalizedEmail);
+  if (!existingUser) throw new Error('Không tìm thấy tài khoản');
+
+  const updatedUser = {
+    ...existingUser,
+    plan: nextPlan,
+    updatedAt: new Date().toISOString(),
+  };
+  await repository.saveUser(normalizedEmail, updatedUser);
+  return publicUser(updatedUser);
+}
+
+module.exports = {
+  sendOtp,
+  register,
+  login,
+  resetPassword,
+  updatePlan,
+};

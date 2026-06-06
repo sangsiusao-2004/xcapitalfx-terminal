@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeX AI — Đăng nhập</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f;
+  --card: #13120e;
+  --card2: #1c1a12;
+  --gold: #c9a84c;
+  --gold2: #e8c96a;
+  --gold-btn: linear-gradient(135deg, #b8922a 0%, #e8c96a 50%, #b8922a 100%);
+  --border: rgba(201,168,76,0.18);
+  --border2: rgba(201,168,76,0.4);
+  --text: #f0e8d0;
+  --muted: #7a6a4a;
+  --red: #e05050;
+  --green: #50c878;
+  --font: 'Be Vietnam Pro', sans-serif;
+}
+body {
+  background: var(--bg);
+  font-family: var(--font);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; position: relative;
+}
+.bg-layer {
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 100%, rgba(201,168,76,0.04) 0%, transparent 50%);
+  pointer-events: none;
+}
+.bg-grid {
+  position: fixed; inset: 0;
+  background-image:
+    linear-gradient(rgba(201,168,76,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,168,76,0.025) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+}
+.card {
+  position: relative; z-index: 10;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  width: 100%; max-width: 440px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 0 80px rgba(201,168,76,0.07), 0 30px 80px rgba(0,0,0,0.7);
+  margin: 1rem;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 12%; right: 12%; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0.5;
+}
+.close-btn {
+  position: absolute; top: 16px; right: 18px;
+  background: none; border: none; color: var(--muted);
+  font-size: 20px; cursor: pointer; line-height: 1; transition: color 0.2s;
+}
+.close-btn:hover { color: var(--gold); }
+.logo-top { text-align: center; margin-bottom: 0.4rem; }
+.logo-top svg { width: 38px; height: 38px; }
+.card-title {
+  text-align: center; font-size: 28px; font-weight: 700;
+  color: var(--gold2); margin-bottom: 1.8rem; letter-spacing: 0.5px;
+}
+.form-group { margin-bottom: 1rem; }
+.input-row { display: flex; gap: 8px; }
+input[type=text], input[type=email], input[type=password] {
+  width: 100%;
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 16px;
+  color: var(--text);
+  font-family: var(--font); font-size: 14px;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
+input::placeholder { color: var(--muted); }
+.btn-otp {
+  white-space: nowrap;
+  background: var(--card2); border: 1px solid var(--gold);
+  border-radius: 10px; color: var(--gold);
+  font-family: var(--font); font-size: 13px; font-weight: 600;
+  padding: 0 16px; cursor: pointer; min-width: 90px; transition: all 0.2s;
+}
+.btn-otp:hover { background: rgba(201,168,76,0.1); }
+.btn-otp:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-main {
+  width: 100%; background: var(--gold-btn); border: none;
+  border-radius: 10px; padding: 14px;
+  color: #1a1200; font-family: var(--font); font-size: 16px; font-weight: 700;
+  cursor: pointer; margin-top: 0.5rem; letter-spacing: 0.5px;
+  transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+}
+.btn-main:hover { opacity: 0.9; box-shadow: 0 4px 24px rgba(201,168,76,0.35); }
+.btn-main:active { transform: scale(0.98); }
+.btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+.pw-wrap { position: relative; }
+.pw-wrap input { padding-right: 52px; }
+.pw-toggle {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-family: var(--font); font-size: 12px; font-weight: 500; transition: color 0.2s;
+}
+.pw-toggle:hover { color: var(--gold); }
+.switch-text { text-align: center; margin-top: 1rem; font-size: 13px; color: var(--muted); }
+.switch-text a { color: var(--gold); cursor: pointer; font-weight: 500; text-decoration: none; }
+.switch-text a:hover { color: var(--gold2); }
+.alert {
+  display: none; border-radius: 8px; padding: 10px 14px;
+  font-size: 13px; margin-bottom: 1rem; line-height: 1.5;
+}
+.alert.show { display: block; }
+.alert.error { background: rgba(224,80,80,0.1); border: 1px solid rgba(224,80,80,0.3); color: var(--red); }
+.alert.success { background: rgba(80,200,120,0.1); border: 1px solid rgba(80,200,120,0.3); color: var(--green); }
+.alert.info { background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.25); color: var(--gold); }
+.countdown { font-size: 11px; color: var(--muted); text-align: right; margin-top: 5px; min-height: 16px; }
+#view-login, #view-register { display: none; }
+#view-login.active, #view-register.active { display: block; }
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="bg-grid"></div>
+
+<div class="card">
+  <button class="close-btn" title="Đóng">×</button>
+
+  <!-- ĐĂNG NHẬP -->
+  <div id="view-login" class="active">
+    <div class="logo-top">
+      <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="3,29 14,18 21,24 35,10" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="27,10 35,10 35,18" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="card-title">Đăng Nhập</div>
+    <div id="login-alert" class="alert"></div>
+    <div class="form-group">
+      <input type="email" id="login-email" placeholder="Email của bạn" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <div class="pw-wrap">
+        <input type="password" id="login-pw" placeholder="Mật khẩu">
+        <button class="pw-toggle" onclick="togglePw('login-pw',this)">Hiện</button>
+      </div>
+    </div>
+    <button class="btn-main" onclick="doLogin()">Đăng Nhập</button>
+    <div class="switch-text" style="margin-top:0.7rem"><a onclick="showForgot()">Quên mật khẩu?</a></div>
+    <div class="switch-text">Chưa có tài khoản? <a onclick="switchView('register')">Đăng ký</a></div>
+  </div>
+
+  <!-- ĐĂNG KÝ -->
+  <div id="view-register">
+    <div class="logo-top">
+      <svg viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline points="3,29 14,18 21,24 35,10" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="27,10 35,10 35,18" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <div class="card-title">Đăng Ký</div>
+    <div id="reg-alert" class="alert"></div>
+    <div class="form-group">
+      <input type="text" id="reg-name" placeholder="Họ và tên">
+    </div>
+    <div class="form-group">
+      <input type="email" id="reg-email" placeholder="Email của bạn">
+    </div>
+    <div class="form-group">
+      <div class="input-row">
+        <input type="text" id="reg-otp" placeholder="Nhập mã xác thực" maxlength="6" style="letter-spacing:4px;font-weight:600">
+        <button class="btn-otp" id="btn-otp" onclick="sendOTP()">Gửi Mã</button>
+      </div>
+      <div class="countdown" id="otp-cd"></div>
+    </div>
+    <div class="form-group">
+      <div class="pw-wrap">
+        <input type="password" id="reg-pw" placeholder="Mật khẩu (tối thiểu 6 ký tự)">
+        <button class="pw-toggle" onclick="togglePw('reg-pw',this)">Hiện</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <div class="pw-wrap">
+        <input type="password" id="reg-pw2" placeholder="Xác nhận mật khẩu">
+        <button class="pw-toggle" onclick="togglePw('reg-pw2',this)">Hiện</button>
+      </div>
+    </div>
+    <button class="btn-main" onclick="doRegister()">Đăng Ký</button>
+    <div class="switch-text">Đã có tài khoản? <a onclick="switchView('login')">Đăng nhập</a></div>
+  </div>
+</div>
+
+<script>
+// =====================================================
+//  CẤU HÌNH EMAILJS — Thay 3 giá trị bên dưới
+//  Xem hướng dẫn chi tiết cuối file này
+// =====================================================
+const EJS_PUBLIC_KEY  = 'YOUR_PUBLIC_KEY';
+const EJS_SERVICE_ID  = 'YOUR_SERVICE_ID';
+const EJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+// =====================================================
+
+emailjs.init(EJS_PUBLIC_KEY);
+
+let otpGenerated = '';
+let otpForEmail  = '';
+let cdTimer      = null;
+
+function getUsers() { try { return JSON.parse(localStorage.getItem('tx_users') || '{}'); } catch(e) { return {}; } }
+function saveUsers(u) { localStorage.setItem('tx_users', JSON.stringify(u)); }
+
+function switchView(v) {
+  document.getElementById('view-login').classList.toggle('active', v==='login');
+  document.getElementById('view-register').classList.toggle('active', v==='register');
+  clearAlert('login-alert'); clearAlert('reg-alert');
+}
+
+function showAlert(id, msg, type) {
+  const el = document.getElementById(id);
+  el.textContent = msg; el.className = 'alert ' + type + ' show';
+}
+function clearAlert(id) {
+  const el = document.getElementById(id);
+  el.className = 'alert'; el.textContent = '';
+}
+
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  btn.textContent = inp.type === 'password' ? 'Hiện' : 'Ẩn';
+}
+
+async function sendOTP() {
+  const email = document.getElementById('reg-email').value.trim();
+  const name  = document.getElementById('reg-name').value.trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    showAlert('reg-alert','⚠ Vui lòng nhập email hợp lệ trước','error'); return;
+  }
+  const users = getUsers();
+  if (users[email]) {
+    showAlert('reg-alert','✗ Email này đã được đăng ký','error'); return;
+  }
+  otpGenerated = String(Math.floor(100000 + Math.random() * 900000));
+  otpForEmail  = email;
+  const btn = document.getElementById('btn-otp');
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    await emailjs.send(EJS_SERVICE_ID, EJS_TEMPLATE_ID, {
+      to_email : email,
+      to_name  : name || email,
+      otp_code : otpGenerated,
+      app_name : 'TradeX AI',
+    });
+    showAlert('reg-alert','✓ Mã xác thực đã gửi đến ' + email + ' — kiểm tra hộp thư (cả Spam)','success');
+    startCd(120);
+  } catch(err) {
+    showAlert('reg-alert','✗ Gửi mã thất bại. Kiểm tra lại cấu hình EmailJS','error');
+    btn.disabled = false; btn.textContent = 'Gửi Mã';
+  }
+}
+
+function startCd(sec) {
+  const btn = document.getElementById('btn-otp');
+  const cd  = document.getElementById('otp-cd');
+  clearInterval(cdTimer);
+  let s = sec;
+  cdTimer = setInterval(() => {
+    cd.textContent = 'Gửi lại sau ' + s + 's';
+    s--;
+    if (s < 0) {
+      clearInterval(cdTimer); cd.textContent = '';
+      btn.disabled = false; btn.textContent = 'Gửi Lại';
+    }
+  }, 1000);
+}
+
+function doRegister() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const otp   = document.getElementById('reg-otp').value.trim();
+  const pw    = document.getElementById('reg-pw').value;
+  const pw2   = document.getElementById('reg-pw2').value;
+
+  if (!name)  { showAlert('reg-alert','⚠ Vui lòng nhập họ và tên','error'); return; }
+  if (!email) { showAlert('reg-alert','⚠ Vui lòng nhập email','error'); return; }
+  if (!otp)   { showAlert('reg-alert','⚠ Vui lòng nhập mã xác thực','error'); return; }
+  if (!otpGenerated) { showAlert('reg-alert','⚠ Vui lòng nhấn Gửi Mã trước','error'); return; }
+  if (otp !== otpGenerated || email !== otpForEmail) {
+    showAlert('reg-alert','✗ Mã xác thực không đúng hoặc đã hết hạn','error'); return;
+  }
+  if (pw.length < 6) { showAlert('reg-alert','⚠ Mật khẩu tối thiểu 6 ký tự','error'); return; }
+  if (pw !== pw2)    { showAlert('reg-alert','✗ Mật khẩu xác nhận không khớp','error'); return; }
+
+  const users = getUsers();
+  if (users[email]) { showAlert('reg-alert','✗ Email này đã được đăng ký','error'); return; }
+
+  users[email] = { name, pw, createdAt: new Date().toISOString() };
+  saveUsers(users);
+  otpGenerated = '';
+
+  showAlert('reg-alert','✓ Đăng ký thành công! Đang chuyển sang đăng nhập...','success');
+  setTimeout(() => {
+    switchView('login');
+    document.getElementById('login-email').value = email;
+  }, 1800);
+}
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  if (!email || !pw) { showAlert('login-alert','⚠ Vui lòng nhập đầy đủ thông tin','error'); return; }
+
+  if (email === 'admin@tradex.ai' && pw === 'admin123') {
+    login({ name: 'Admin', email }); return;
+  }
+  const users = getUsers();
+  if (!users[email] || users[email].pw !== pw) {
+    showAlert('login-alert','✗ Email hoặc mật khẩu không đúng','error'); return;
+  }
+  login({ name: users[email].name, email });
+}
+
+function login(user) {
+  sessionStorage.setItem('tx_auth','1');
+  sessionStorage.setItem('tx_user', JSON.stringify(user));
+  window.location.href = 'index.html';
+}
+
+function showForgot() {
+  showAlert('login-alert','ℹ Liên hệ quản trị viên để đặt lại mật khẩu.','info');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('view-login').classList.contains('active')) doLogin();
+  else doRegister();
+});
+
+if (sessionStorage.getItem('tx_auth')) window.location.href = 'index.html';
+</script>
+</body>
+</html>
