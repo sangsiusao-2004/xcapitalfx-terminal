@@ -105,8 +105,9 @@ async function routeApi(req, res, url) {
   }
 
   if (req.method === 'POST' && url.pathname === '/api/auth/update-plan') {
-    const providedKey = req.headers['x-admin-plan-key'];
-    if (!CONFIG.adminPlanKey || providedKey !== CONFIG.adminPlanKey) {
+    const providedKey = String(req.headers['x-admin-plan-key'] || '').trim();
+    const expectedKey = String(CONFIG.adminPlanKey || '').trim();
+    if (!expectedKey || providedKey !== expectedKey) {
       sendError(res, 403, 'Bạn không có quyền thay đổi gói tài khoản.');
       return;
     }

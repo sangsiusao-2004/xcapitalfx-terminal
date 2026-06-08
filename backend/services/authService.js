@@ -108,20 +108,6 @@ async function register({ name, email, password, otp }) {
 async function login({ user, password }) {
   const identifier = repository.normalizeEmail(user);
 
-  if ((identifier === 'admin' || identifier === 'admin@tradex.ai') && password === 'admin123') {
-    return publicUser({
-      name: 'Admin',
-      email: 'admin@tradex.ai',
-      plan: 'Premium',
-      verified: true,
-      telegramId: '',
-      telegramUsername: '',
-      telegramVerified: true,
-      planExpiresAt: null,
-      createdAt: new Date().toISOString(),
-    });
-  }
-
   const existingUser = await repository.getUserByEmail(identifier);
   if (!existingUser || !verifyPassword(String(password || ''), existingUser.passwordHash)) {
     throw new Error('Sai tên đăng nhập hoặc mật khẩu');
@@ -174,20 +160,6 @@ async function updatePlan({ email, plan, durationDays, expiresAt, telegramVerifi
 
   if (requestedPlan && !allowedPlans.has(requestedPlan)) {
     throw new Error('Gói tài khoản không hợp lệ');
-  }
-
-  if (normalizedEmail === 'admin@tradex.ai') {
-    return publicUser({
-      name: 'Admin',
-      email: normalizedEmail,
-      plan: 'Premium',
-      verified: true,
-      telegramId: '',
-      telegramUsername: '',
-      telegramVerified: true,
-      planExpiresAt: null,
-      createdAt: new Date().toISOString(),
-    });
   }
 
   const existingUser = await repository.getUserByEmail(normalizedEmail);

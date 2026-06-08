@@ -18,7 +18,7 @@ const MARKET_REFRESH_MS = 3000;
 const SIGNAL_HISTORY_KEY = 'tx_signal_history';
 const SIGNAL_HISTORY_LIMIT = 10;
 const SIGNAL_USAGE_KEY = 'tx_signal_usage';
-const USAGE_NOTICE_HIDE_KEY = 'tx_usage_notice_hidden_date';
+const USAGE_NOTICE_HIDE_KEY = 'tx_usage_notice_hidden_date_v2';
 const PLAN_CONFIGS = {
   Free: {
     dailyLimit: 5,
@@ -266,10 +266,10 @@ function updatePhoneVerifyNudge() {
 }
 
 function updateTelegramVerifyUi(user = getStoredUser()) {
-  const verifyButton = document.querySelector('[data-profile-action="phone"]');
-  if (verifyButton) {
-    verifyButton.hidden = Boolean(user.telegramVerified);
-  }
+  document.querySelectorAll('[data-profile-action="phone"], [data-modal-action="phone"]')
+    .forEach(button => {
+      button.hidden = Boolean(user.telegramVerified);
+    });
 }
 
 function openTelegramAdmin() {
@@ -449,8 +449,18 @@ function openPhoneVerification() {
 }
 
 function openUsageNotice() {
-  if (localStorage.getItem(USAGE_NOTICE_HIDE_KEY) === todayKey()) return;
   document.getElementById('usage-notice')?.classList.add('open');
+}
+
+function shouldShowUsageNotice() {
+  return localStorage.getItem(USAGE_NOTICE_HIDE_KEY) !== todayKey();
+}
+
+function scheduleUsageNotice() {
+  if (!shouldShowUsageNotice()) return;
+  requestAnimationFrame(() => {
+    setTimeout(openUsageNotice, 650);
+  });
 }
 
 function closeUsageNotice() {
@@ -585,7 +595,7 @@ function submitPasswordChange() {
     catch (err) { return {}; }
   })();
   const userRecord = users[currentUser.email];
-  const currentPassword = userRecord?.pw || (currentUser.email === 'admin@tradex.ai' ? 'admin123' : '');
+  const currentPassword = userRecord?.pw || '';
 
   if (!oldPassword || !newPassword || !confirmPassword) {
     if (alertEl) alertEl.textContent = 'Vui lòng nhập đầy đủ thông tin.';
@@ -1288,6 +1298,6 @@ window.addEventListener('load', async () => {
   });
 
   document.getElementById('xau-btn')?.addEventListener('click', () => window.switchToXAU());
-  setTimeout(openUsageNotice, 450);
+  scheduleUsageNotice();
   window.testBTC = () => selectSym('BTCUSDT');
 });

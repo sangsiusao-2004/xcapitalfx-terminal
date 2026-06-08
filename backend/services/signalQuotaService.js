@@ -91,7 +91,6 @@ function writeStore(store) {
 async function getUserAccessForEmail(email) {
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) throw new Error('Thiếu email tài khoản để kiểm tra lượt phân tích');
-  if (normalizedEmail === 'admin@tradex.ai') return { plan: 'Premium', telegramVerified: true };
 
   const user = await authRepository.getUserByEmail(normalizedEmail);
   if (!user) throw new Error('Không tìm thấy tài khoản. Vui lòng đăng nhập lại.');
