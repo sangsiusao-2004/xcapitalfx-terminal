@@ -5,6 +5,7 @@ const CONFIG = {
   anthropicBaseUrl: process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com',
   anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
   anthropicModel: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+  enableClaudeChat: process.env.ENABLE_CLAUDE_CHAT === 'true',
   emailProvider: process.env.EMAIL_PROVIDER || 'resend',
   resendApiKey: process.env.RESEND_API_KEY || '',
   emailFrom: process.env.EMAIL_FROM || 'XCapital AI <onboarding@resend.dev>',

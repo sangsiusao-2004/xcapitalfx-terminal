@@ -50,16 +50,38 @@ async function supabaseRequest(method, table, query = '', body) {
   return text ? JSON.parse(text) : null;
 }
 
+function isMissingTelegramColumnError(err) {
+  const message = String(err?.message || '');
+  return message.includes('PGRST204')
+    && (
+      message.includes("'telegram_id' column") ||
+      message.includes("'telegram_username' column") ||
+      message.includes("'telegram_verified' column")
+    );
+}
+
 function toDbUser(user) {
   return {
     name: user.name,
     email: normalizeEmail(user.email),
     password_hash: user.passwordHash,
     plan: user.plan || 'Free',
+    plan_expires_at: user.planExpiresAt || null,
     verified: Boolean(user.verified),
+    telegram_id: user.telegramId || null,
+    telegram_username: user.telegramUsername || null,
+    telegram_verified: Boolean(user.telegramVerified),
     created_at: user.createdAt || new Date().toISOString(),
     updated_at: user.updatedAt || new Date().toISOString(),
   };
+}
+
+function toDbUserWithoutTelegram(user) {
+  const row = toDbUser(user);
+  delete row.telegram_id;
+  delete row.telegram_username;
+  delete row.telegram_verified;
+  return row;
 }
 
 function fromDbUser(row) {
@@ -69,7 +91,11 @@ function fromDbUser(row) {
     email: row.email,
     passwordHash: row.password_hash,
     plan: row.plan || 'Free',
+    planExpiresAt: row.plan_expires_at,
     verified: Boolean(row.verified),
+    telegramId: row.telegram_id || '',
+    telegramUsername: row.telegram_username || '',
+    telegramVerified: Boolean(row.telegram_verified),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -150,12 +176,23 @@ async function saveUser(email, user) {
   const normalizedUser = { ...user, email: normalizedEmail };
 
   if (useSupabase()) {
-    const rows = await supabaseRequest(
-      'POST',
-      USERS_TABLE,
-      '?on_conflict=email',
-      toDbUser(normalizedUser)
-    );
+    let rows;
+    try {
+      rows = await supabaseRequest(
+        'POST',
+        USERS_TABLE,
+        '?on_conflict=email',
+        toDbUser(normalizedUser)
+      );
+    } catch (err) {
+      if (!isMissingTelegramColumnError(err)) throw err;
+      rows = await supabaseRequest(
+        'POST',
+        USERS_TABLE,
+        '?on_conflict=email',
+        toDbUserWithoutTelegram(normalizedUser)
+      );
+    }
     return fromDbUser(rows?.[0]) || normalizedUser;
   }
 

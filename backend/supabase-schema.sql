@@ -4,10 +4,26 @@ create table if not exists public.xcapital_users (
   email text not null unique,
   password_hash text not null,
   plan text not null default 'Free',
+  plan_expires_at timestamptz,
   verified boolean not null default false,
+  telegram_id text unique,
+  telegram_username text,
+  telegram_verified boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.xcapital_users
+  add column if not exists telegram_id text unique;
+
+alter table public.xcapital_users
+  add column if not exists telegram_username text;
+
+alter table public.xcapital_users
+  add column if not exists telegram_verified boolean not null default false;
+
+alter table public.xcapital_users
+  add column if not exists plan_expires_at timestamptz;
 
 create table if not exists public.email_otps (
   id uuid primary key default gen_random_uuid(),

@@ -10,6 +10,7 @@ const PLAN_RULES = {
   Pro: { dailyLimit: 50, cooldownSec: 30 },
   Premium: { dailyLimit: Infinity, cooldownSec: 5 },
 };
+const EMAIL_ONLY_RULES = { dailyLimit: 2, cooldownSec: 120 * 60 };
 
 function useSupabase() {
   return Boolean(CONFIG.supabaseUrl && CONFIG.supabaseServiceRoleKey);
@@ -61,6 +62,12 @@ function planRules(plan) {
   return PLAN_RULES[plan] || PLAN_RULES.Free;
 }
 
+function isExpired(expiresAt) {
+  if (!expiresAt) return false;
+  const time = new Date(expiresAt).getTime();
+  return Number.isFinite(time) && time <= Date.now();
+}
+
 function ensureStore() {
   if (!fs.existsSync(STORE_PATH)) {
     fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
@@ -81,14 +88,19 @@ function writeStore(store) {
   fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
 }
 
-async function getPlanForEmail(email) {
+async function getUserAccessForEmail(email) {
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) throw new Error('Thiếu email tài khoản để kiểm tra lượt phân tích');
-  if (normalizedEmail === 'admin@tradex.ai') return 'Premium';
+  if (normalizedEmail === 'admin@tradex.ai') return { plan: 'Premium', telegramVerified: true };
 
   const user = await authRepository.getUserByEmail(normalizedEmail);
   if (!user) throw new Error('Không tìm thấy tài khoản. Vui lòng đăng nhập lại.');
-  return user.plan || 'Free';
+  const expired = isExpired(user.planExpiresAt);
+  return {
+    plan: expired ? 'Free' : (user.plan || 'Free'),
+    planExpiresAt: expired ? null : (user.planExpiresAt || null),
+    telegramVerified: Boolean(user.telegramVerified),
+  };
 }
 
 async function getUsageRow(email, usageDate = todayKey()) {
@@ -124,8 +136,8 @@ async function getUsageRow(email, usageDate = todayKey()) {
   };
 }
 
-function buildStatus({ email, plan, usage }) {
-  const rules = planRules(plan);
+function buildStatus({ email, plan, planExpiresAt, telegramVerified, usage }) {
+  const rules = telegramVerified ? planRules(plan) : EMAIL_ONLY_RULES;
   const lastAt = usage.lastUsedAt ? new Date(usage.lastUsedAt).getTime() : 0;
   const cooldownLeftSec = Math.max(0, Math.ceil((rules.cooldownSec * 1000 - (Date.now() - lastAt)) / 1000));
   const remaining = Number.isFinite(rules.dailyLimit)
@@ -135,6 +147,9 @@ function buildStatus({ email, plan, usage }) {
   return {
     email,
     plan,
+    planExpiresAt: planExpiresAt || null,
+    telegramVerified: Boolean(telegramVerified),
+    accessLevel: telegramVerified ? plan : 'EmailOnly',
     usageDate: usage.usageDate,
     used: Number(usage.count || 0),
     dailyLimit: Number.isFinite(rules.dailyLimit) ? rules.dailyLimit : null,
@@ -146,9 +161,9 @@ function buildStatus({ email, plan, usage }) {
 
 async function getUsageStatus(email) {
   const normalizedEmail = normalizeEmail(email);
-  const plan = await getPlanForEmail(normalizedEmail);
+  const access = await getUserAccessForEmail(normalizedEmail);
   const usage = await getUsageRow(normalizedEmail);
-  return buildStatus({ email: normalizedEmail, plan, usage });
+  return buildStatus({ email: normalizedEmail, ...access, usage });
 }
 
 async function assertCanAnalyze(email) {
@@ -190,10 +205,10 @@ async function recordUsage(email) {
       }
     );
     const saved = rows?.[0];
-    const plan = await getPlanForEmail(normalizedEmail);
+    const access = await getUserAccessForEmail(normalizedEmail);
     return buildStatus({
       email: normalizedEmail,
-      plan,
+      ...access,
       usage: {
         email: saved.email,
         usageDate: saved.usage_date,
@@ -206,8 +221,8 @@ async function recordUsage(email) {
   const store = readStore();
   store[`${normalizedEmail}::${usageDate}`] = next;
   writeStore(store);
-  const plan = await getPlanForEmail(normalizedEmail);
-  return buildStatus({ email: normalizedEmail, plan, usage: next });
+  const access = await getUserAccessForEmail(normalizedEmail);
+  return buildStatus({ email: normalizedEmail, ...access, usage: next });
 }
 
 module.exports = {

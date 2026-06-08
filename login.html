@@ -217,7 +217,6 @@ input::placeholder { color: var(--muted); }
     <div class="card">
       <div class="card-header">
         <div class="card-title">ĐĂNG NHẬP HỆ THỐNG</div>
-        <div class="card-sub">// AUTHENTICATION REQUIRED</div>
       </div>
 
       <div id="login-alert" class="alert"></div>
@@ -323,7 +322,6 @@ input::placeholder { color: var(--muted); }
     <div class="card">
       <div class="card-header">
         <div class="card-title">TẠO TÀI KHOẢN</div>
-        <div class="card-sub">// NEW USER REGISTRATION</div>
       </div>
 
       <div id="reg-alert" class="alert"></div>
@@ -382,7 +380,7 @@ input::placeholder { color: var(--muted); }
 
 
 // ---- Redirect nếu đã đăng nhập ----
-if (sessionStorage.getItem('tx_auth')) window.location.href = 'index.html';
+if (sessionStorage.getItem('tx_auth')) window.location.href = '/trang-chu';
 
 async function postApi(path, body) {
   const controller = new AbortController();
@@ -613,7 +611,7 @@ async function doLogin() {
 function login(user) {
   sessionStorage.setItem('tx_auth', '1');
   sessionStorage.setItem('tx_user', JSON.stringify(user));
-  window.location.href = 'index.html';
+  window.location.href = '/trang-chu';
 }
 
 // ---- Enter key ----
@@ -624,6 +622,10 @@ document.addEventListener('keydown', e => {
   else if (document.getElementById('view-forgot').classList.contains('active')) verifyForgotOTP();
   else if (document.getElementById('view-reset').classList.contains('active')) resetPassword();
 });
+
+if (/dang-ky|đăng-ký|đăng%20ký|register/i.test(window.location.pathname)) {
+  switchView('register');
+}
 </script>
 </body>
 </html>

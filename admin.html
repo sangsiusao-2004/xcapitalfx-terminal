@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XCapital Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #070b0f;
+  --panel: #0d1418;
+  --panel2: #111b20;
+  --border: rgba(0,200,150,0.22);
+  --accent: #00c896;
+  --accent2: #00e5b0;
+  --red: #ff5d6c;
+  --yellow: #ffd76a;
+  --text: #e4f7f1;
+  --muted: #71958c;
+  --mono: 'Share Tech Mono', 'Be Vietnam Pro', monospace;
+  --head: 'Rajdhani', 'Be Vietnam Pro', sans-serif;
+  --body: 'Inter', 'Be Vietnam Pro', sans-serif;
+}
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 50% 110%, rgba(0,229,176,0.18), transparent 34%),
+    linear-gradient(180deg, #061013, var(--bg));
+  color: var(--text);
+  font-family: var(--body);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+}
+.shell {
+  width: min(560px, 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(13,20,24,0.94);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 42px rgba(0,200,150,0.08);
+  overflow: hidden;
+}
+.head {
+  padding: 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.brand {
+  font-family: var(--head);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+.brand span { color: var(--accent); }
+.tag {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 7px;
+}
+.body {
+  display: grid;
+  gap: 14px;
+  padding: 20px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.field { display: grid; gap: 6px; }
+.full { grid-column: 1 / -1; }
+label {
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+input, select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(0,200,150,0.2);
+  border-radius: 8px;
+  background: #071013;
+  color: var(--text);
+  font: 13px var(--mono);
+  outline: none;
+  padding: 10px 12px;
+}
+input:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,200,150,0.1);
+}
+.check {
+  align-items: center;
+  background: var(--panel2);
+  border: 1px solid rgba(0,200,150,0.16);
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+}
+.check input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: var(--accent);
+}
+.check strong {
+  color: var(--text);
+  font-size: 13px;
+}
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+button {
+  min-height: 44px;
+  border: 1px solid rgba(0,200,150,0.35);
+  border-radius: 8px;
+  background: rgba(0,200,150,0.1);
+  color: var(--accent);
+  cursor: pointer;
+  font: 700 11px var(--mono);
+  letter-spacing: 1px;
+}
+button.primary {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #03100c;
+}
+button.danger {
+  border-color: rgba(255,93,108,0.38);
+  background: rgba(255,93,108,0.08);
+  color: var(--red);
+}
+.result {
+  min-height: 42px;
+  border: 1px solid rgba(0,200,150,0.14);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.18);
+  color: var(--muted);
+  font: 12px/1.55 var(--mono);
+  padding: 12px;
+  white-space: pre-wrap;
+}
+.result.ok { color: var(--accent2); }
+.result.err { color: var(--red); }
+.hint {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+@media (max-width: 520px) {
+  .grid, .actions { grid-template-columns: 1fr; }
+  .head { align-items: flex-start; flex-direction: column; }
+}
+</style>
+</head>
+<body>
+  <main class="shell">
+    <div class="head">
+      <div>
+        <div class="brand"><span>X</span>Capital Admin</div>
+        <div class="hint">Kích hoạt gói và xác minh Telegram thủ công.</div>
+      </div>
+      <div class="tag">PRIVATE</div>
+    </div>
+
+    <div class="body">
+      <div class="grid">
+        <div class="field full">
+          <label>Admin key</label>
+          <input id="admin-key" type="password" placeholder="Nhập ADMIN_PLAN_KEY">
+        </div>
+        <div class="field full">
+          <label>Email khách hàng</label>
+          <input id="email" type="email" placeholder="email-khach@example.com">
+        </div>
+        <div class="field">
+          <label>Gói tài khoản</label>
+          <select id="plan">
+            <option value="">Chỉ cập nhật Verify</option>
+            <option value="Free">Free</option>
+            <option value="Pro">Pro</option>
+            <option value="Premium">Premium</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Số ngày</label>
+          <input id="days" type="number" min="1" step="1" value="30">
+        </div>
+        <label class="check full">
+          <input id="telegram-verified" type="checkbox" checked>
+          <span>
+            <strong>Xác minh Telegram</strong><br>
+            <span class="hint">Bật để khách nhận quyền lợi Free/Pro/Premium.</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button class="primary" id="apply-btn" type="button">CẬP NHẬT</button>
+        <button class="danger" id="free-btn" type="button">HẠ VỀ FREE</button>
+      </div>
+
+      <div class="result" id="result">Sẵn sàng.</div>
+    </div>
+  </main>
+
+<script>
+const keyInput = document.getElementById('admin-key');
+const emailInput = document.getElementById('email');
+const planInput = document.getElementById('plan');
+const daysInput = document.getElementById('days');
+const verifyInput = document.getElementById('telegram-verified');
+const resultEl = document.getElementById('result');
+
+keyInput.value = localStorage.getItem('xcapital_admin_key') || '';
+
+function showResult(message, ok = false) {
+  resultEl.textContent = message;
+  resultEl.className = `result ${ok ? 'ok' : 'err'}`;
+}
+
+async function updateAccount({ forceFree = false } = {}) {
+  const adminKey = keyInput.value.trim();
+  const email = emailInput.value.trim().toLowerCase();
+  const selectedPlan = forceFree ? 'Free' : planInput.value;
+  const durationDays = Number(daysInput.value || 0);
+
+  if (!adminKey) return showResult('Thiếu admin key.');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showResult('Email khách hàng không hợp lệ.');
+
+  localStorage.setItem('xcapital_admin_key', adminKey);
+  const body = {
+    email,
+    telegramVerified: forceFree ? true : verifyInput.checked,
+  };
+  if (selectedPlan) body.plan = selectedPlan;
+  if (selectedPlan && selectedPlan !== 'Free' && durationDays > 0) body.durationDays = durationDays;
+
+  showResult('Đang cập nhật...', true);
+
+  try {
+    const res = await fetch('/api/auth/update-plan', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-plan-key': adminKey,
+      },
+      body: JSON.stringify(body),
+    });
+    const payload = await res.json();
+    if (!res.ok || payload.ok === false) {
+      throw new Error(payload.error?.message || 'Không thể cập nhật tài khoản.');
+    }
+    const user = payload.data;
+    showResult([
+      'Cập nhật thành công.',
+      `Email: ${user.email}`,
+      `Plan: ${user.plan}`,
+      `Telegram: ${user.telegramVerified ? 'Verified' : 'Not verified'}`,
+      `Hết hạn: ${user.planExpiresAt || 'Không giới hạn / Free'}`,
+    ].join('\n'), true);
+  } catch (err) {
+    showResult(`Lỗi: ${err.message || err}`);
+  }
+}
+
+document.getElementById('apply-btn').addEventListener('click', () => updateAccount());
+document.getElementById('free-btn').addEventListener('click', () => updateAccount({ forceFree: true }));
+</script>
+</body>
+</html>

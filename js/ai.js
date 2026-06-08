@@ -20,6 +20,7 @@ export async function askAI(currentSym, currentTf) {
       question: q,
       symbol: currentSym,
       timeframe: currentTf,
+      userEmail: JSON.parse(sessionStorage.getItem('tx_user') || '{}').email,
     });
 
     chatEl.querySelector('.ai-a-text').classList.remove('loading');

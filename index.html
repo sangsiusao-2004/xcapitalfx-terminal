@@ -247,6 +247,75 @@ body > * {
   color: var(--muted2);
   margin-top: 2px;
 }
+.profile-dock.needs-phone-verify .profile-trigger {
+  border-color: rgba(0,229,176,0.65);
+  box-shadow: 0 0 0 1px rgba(0,229,176,0.16), 0 0 24px rgba(0,200,150,0.18);
+}
+.phone-verify-nudge {
+  position: fixed;
+  width: min(292px, calc(100vw - 24px));
+  min-height: 58px;
+  z-index: 760;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid rgba(0,229,176,0.45);
+  border-radius: 8px;
+  background: rgba(7,14,15,0.96);
+  color: #eafff8;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.45), 0 0 26px rgba(0,200,150,0.16);
+  cursor: pointer;
+  padding: 10px 12px;
+  font-family: var(--body);
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: left;
+  animation: phoneNudgeFloat 1.45s ease-in-out infinite;
+}
+.phone-verify-nudge::after {
+  content: "";
+  position: absolute;
+  left: 28px;
+  bottom: -8px;
+  width: 14px;
+  height: 14px;
+  background: rgba(7,14,15,0.96);
+  border-right: 1px solid rgba(0,229,176,0.45);
+  border-bottom: 1px solid rgba(0,229,176,0.45);
+  transform: rotate(45deg);
+}
+.phone-verify-nudge-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0,229,176,0.14);
+  border: 1px solid rgba(0,229,176,0.42);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+.phone-verify-nudge-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.phone-verify-nudge-copy strong {
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.1;
+}
+.phone-verify-nudge-copy span {
+  color: #c8fff0;
+  font-size: 11px;
+  line-height: 1.2;
+}
+@keyframes phoneNudgeFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
 .profile-chevron {
   color: var(--muted2);
   font-family: var(--mono);
@@ -285,6 +354,28 @@ body > * {
   text-align: left;
 }
 .profile-menu-btn:hover { background: rgba(0,200,150,0.08); color: var(--accent); }
+.profile-menu-btn[data-profile-action="phone"] {
+  color: #ffd76a;
+  background: rgba(255,215,106,0.08);
+  border: 1px solid rgba(255,215,106,0.28);
+  box-shadow: 0 0 18px rgba(255,215,106,0.08);
+  font-weight: 700;
+  animation: phoneMenuPulse 1.35s ease-in-out infinite;
+}
+.profile-menu-btn[data-profile-action="phone"]:hover {
+  color: #ffe8a3;
+  background: rgba(255,215,106,0.15);
+}
+@keyframes phoneMenuPulse {
+  0%, 100% {
+    border-color: rgba(255,215,106,0.24);
+    box-shadow: 0 0 10px rgba(255,215,106,0.05);
+  }
+  50% {
+    border-color: rgba(255,215,106,0.72);
+    box-shadow: 0 0 20px rgba(255,215,106,0.22);
+  }
+}
 .profile-menu-btn.logout {
   color: #ff9a9a;
 }
@@ -352,6 +443,21 @@ body > * {
   color: var(--accent2);
   font-weight: 600;
   line-height: 1.5;
+}
+.modal-info-link {
+  background: transparent;
+  border: 0;
+  color: var(--accent2);
+  cursor: pointer;
+  display: inline;
+  font: inherit;
+  font-weight: 700;
+  padding: 0;
+  text-align: left;
+}
+.modal-info-link:hover {
+  color: #fff;
+  text-decoration: underline;
 }
 .modal-profile-row {
   display: flex;
@@ -431,6 +537,238 @@ body > * {
   font-size: 11px;
   min-height: 16px;
   text-align: center;
+}
+.usage-notice-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 920;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0,0,0,0.78);
+  backdrop-filter: blur(7px);
+}
+.usage-notice-backdrop.open {
+  display: flex;
+}
+.usage-notice {
+  width: min(880px, 100%);
+  max-height: min(92vh, 820px);
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 92% 100%, rgba(255,71,87,0.08), transparent 26%),
+    linear-gradient(145deg, #10161c, #080d11 68%);
+  border: 1px solid rgba(0,200,150,0.32);
+  border-radius: 20px;
+  box-shadow: 0 30px 100px rgba(0,0,0,0.72), 0 0 44px rgba(0,200,150,0.08);
+  padding: 30px 34px;
+}
+.usage-notice-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+.notice-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.notice-logo {
+  width: 58px;
+  height: 44px;
+  border: 1px solid rgba(0,229,176,0.38);
+  border-radius: 10px;
+  color: var(--accent2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--head);
+  font-size: 22px;
+  font-weight: 800;
+  background: rgba(0,200,150,0.07);
+}
+.notice-brand-name {
+  color: #fff;
+  font-family: var(--head);
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+.notice-brand-sub {
+  color: var(--muted2);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-top: 3px;
+}
+.notice-badge {
+  border: 1px solid rgba(255,211,42,0.26);
+  border-radius: 999px;
+  color: var(--yellow);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+.notice-eyebrow {
+  color: #ff9d6a;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  margin-bottom: 12px;
+}
+.notice-title {
+  color: #fff;
+  font-family: var(--head);
+  font-size: clamp(38px, 7vw, 76px);
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 0.92;
+  margin-bottom: 18px;
+}
+.notice-lead {
+  color: #b8c9c5;
+  font-size: 15px;
+  line-height: 1.8;
+  max-width: 760px;
+}
+.notice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin: 26px 0 14px;
+}
+.notice-card,
+.notice-warning {
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(0,200,150,0.16);
+  border-radius: 16px;
+  padding: 18px;
+}
+.notice-card-kicker,
+.notice-warning-kicker {
+  color: var(--muted2);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+.notice-card-title {
+  color: #fff;
+  font-family: var(--head);
+  font-size: 21px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+.notice-card-text {
+  color: #acbfba;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.notice-warning {
+  margin-top: 14px;
+  border-color: rgba(255,211,42,0.18);
+}
+.notice-warning-title {
+  color: #fff;
+  font-family: var(--head);
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+.notice-warning ul {
+  display: grid;
+  gap: 9px;
+  list-style: none;
+}
+.notice-warning li {
+  color: #c3d0cd;
+  font-size: 13px;
+  line-height: 1.65;
+  padding-left: 18px;
+  position: relative;
+}
+.notice-warning li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--yellow);
+  box-shadow: 0 0 10px rgba(255,211,42,0.35);
+}
+.notice-support {
+  color: var(--accent2);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.notice-support:hover {
+  color: #fff;
+  text-decoration: underline;
+}
+.notice-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+.notice-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.notice-chip {
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 999px;
+  color: #aabbb7;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 10px;
+}
+.notice-dismiss {
+  align-items: center;
+  color: #b8c9c5;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 12px;
+  gap: 8px;
+  line-height: 1.4;
+  margin-top: 12px;
+}
+.notice-dismiss input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.notice-accept {
+  flex-shrink: 0;
+  border: 1px solid rgba(0,229,176,0.4);
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #03100c;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 13px 18px;
 }
 .plans-grid {
   display: grid;
@@ -540,6 +878,24 @@ body > * {
   .plan-card {
     min-height: 0;
   }
+  .usage-notice {
+    border-radius: 16px;
+    padding: 22px 18px;
+  }
+  .usage-notice-top,
+  .notice-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .notice-grid {
+    grid-template-columns: 1fr;
+  }
+  .notice-title {
+    font-size: 42px;
+  }
+  .notice-accept {
+    width: 100%;
+  }
 }
 
 /* ===== CHART AREA ===== */
@@ -596,8 +952,17 @@ body > * {
 .signal-card.buy::before  { background: var(--accent); }
 .signal-card.sell::before { background: var(--red); }
 .signal-card.wait::before { background: var(--yellow); }
-.sig-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; }
-.sig-direction { font-family: var(--head); font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+.sig-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.sig-direction {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--head);
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
 .buy  .sig-direction { color: var(--accent); }
 .sell .sig-direction { color: var(--red); }
 .wait .sig-direction { color: var(--yellow); }
@@ -605,13 +970,19 @@ body > * {
 .sig-time { font-family: var(--mono); font-size: 9px; color: var(--muted); }
 .order-type {
   display: inline-block;
-  margin-top: 2px;
+  flex-shrink: 0;
   border: 1px solid var(--border2);
   border-radius: 4px;
   color: var(--accent);
   font-family: var(--mono);
   font-size: 9px;
-  padding: 2px 5px;
+  line-height: 1.1;
+  max-width: 112px;
+  overflow: hidden;
+  padding: 4px 6px;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .sig-row {
   display: flex; justify-content: space-between;
@@ -994,6 +1365,39 @@ body > * {
     z-index: 5100;
     width: min(260px, calc(100vw - 16px));
     border-radius: 10px;
+  }
+
+  .phone-verify-nudge {
+    width: min(238px, calc(100vw - 24px));
+    min-height: 46px;
+    padding: 8px 10px;
+    gap: 8px;
+    font-size: 11px;
+    z-index: 4990;
+  }
+
+  .phone-verify-nudge.mobile::after {
+    top: -8px;
+    left: var(--nudge-arrow-left, 196px);
+    right: auto;
+    bottom: auto;
+    border: 0;
+    border-left: 1px solid rgba(0,229,176,0.45);
+    border-top: 1px solid rgba(0,229,176,0.45);
+  }
+
+  .phone-verify-nudge.mobile .phone-verify-nudge-icon {
+    width: 25px;
+    height: 25px;
+    font-size: 13px;
+  }
+
+  .phone-verify-nudge.mobile .phone-verify-nudge-copy strong {
+    font-size: 11px;
+  }
+
+  .phone-verify-nudge.mobile .phone-verify-nudge-copy span {
+    font-size: 10px;
   }
 
   #chart-area {
@@ -1437,6 +1841,7 @@ body > * {
     <div class="profile-menu" id="profile-menu">
       <div class="profile-menu-list">
         <button class="profile-menu-btn" data-profile-action="upgrade" type="button">✦ Nâng cấp tài khoản</button>
+        <button class="profile-menu-btn" data-profile-action="phone" type="button">✦ Xác minh qua Telegram</button>
         <button class="profile-menu-btn" data-profile-action="profile" type="button">♟ Hồ sơ</button>
         <button class="profile-menu-btn" data-profile-action="settings" type="button">⚙ Cài đặt hệ thống</button>
         <button class="profile-menu-btn" data-profile-action="support" type="button">? Hỗ trợ</button>
@@ -1552,6 +1957,73 @@ body > * {
   </div>
 </div>
 
+<div class="usage-notice-backdrop" id="usage-notice" role="dialog" aria-modal="true" aria-labelledby="usage-notice-title">
+  <div class="usage-notice">
+    <div class="usage-notice-top">
+      <div class="notice-brand">
+        <div class="notice-logo">X</div>
+        <div>
+          <div class="notice-brand-name">XCAPITAL AI</div>
+          <div class="notice-brand-sub">AI SIGNAL · SCALPING · RISK CONTROL</div>
+        </div>
+      </div>
+      <div class="notice-badge">THÔNG TIN QUAN TRỌNG</div>
+    </div>
+
+    <div class="notice-eyebrow">TRƯỚC KHI SỬ DỤNG BOT</div>
+    <h2 class="notice-title" id="usage-notice-title">Lưu ý khi dùng XCapital AI Signal</h2>
+    <p class="notice-lead">
+      XCapital AI Signal là công cụ hỗ trợ phân tích thị trường theo dữ liệu giá, đa khung thời gian,
+      vùng thanh khoản và mức risk bạn nhập. Bot được thiết kế để hỗ trợ kế hoạch scalping ngắn hạn,
+      không phải cam kết lợi nhuận hay lời khuyên đầu tư bắt buộc phải làm theo.
+    </p>
+
+    <div class="notice-grid">
+      <div class="notice-card">
+        <div class="notice-card-kicker">Cách bot hoạt động</div>
+        <div class="notice-card-title">Ưu tiên LIMIT/retest</div>
+        <div class="notice-card-text">
+          Bot đọc 1H, 15M và 5M để lọc xu hướng, vùng setup và điểm entry. Nếu thị trường chưa rõ,
+          tín hiệu WAIT là lựa chọn bảo vệ vốn, không phải lỗi hệ thống.
+        </div>
+      </div>
+      <div class="notice-card">
+        <div class="notice-card-kicker">Hỗ trợ tài khoản</div>
+        <div class="notice-card-title">Liên hệ qua Telegram</div>
+        <div class="notice-card-text">
+          Nếu cần xác minh Telegram, nâng cấp Pro/Premium hoặc được hướng dẫn sử dụng, vui lòng liên hệ
+          <button class="notice-support" data-notice-action="telegram" type="button">@ryantranforex</button>.
+        </div>
+      </div>
+    </div>
+
+    <div class="notice-warning">
+      <div class="notice-warning-kicker">Cảnh báo rủi ro</div>
+      <div class="notice-warning-title">Bạn cần tự chịu trách nhiệm với mọi quyết định giao dịch</div>
+      <ul>
+        <li>Tín hiệu từ bot chỉ mang tính tham khảo, không đảm bảo thắng lệnh và không đảm bảo lợi nhuận.</li>
+        <li>Luôn kiểm tra lại biểu đồ, spread, tin tức mạnh và phiên giao dịch trước khi vào lệnh.</li>
+        <li>Không all-in, không gồng lỗ, không dùng khối lượng vượt quá mức rủi ro bạn có thể chấp nhận.</li>
+        <li>Thị trường vàng, forex và crypto có thể biến động mạnh, đặc biệt quanh CPI, NFP, FOMC và tin lãi suất.</li>
+      </ul>
+    </div>
+
+    <div class="notice-actions">
+      <div class="notice-chips">
+        <span class="notice-chip">QUẢN TRỊ VỐN</span>
+        <span class="notice-chip">DESKTOP & MOBILE</span>
+        <span class="notice-chip">HỖ TRỢ TELEGRAM</span>
+        <span class="notice-chip">AI SIGNAL</span>
+        <label class="notice-dismiss">
+          <input id="usage-notice-hide-today" type="checkbox">
+          <span>Không hiện lại trong hôm nay</span>
+        </label>
+      </div>
+      <button class="notice-accept" id="usage-notice-accept" type="button">TÔI ĐÃ HIỂU</button>
+    </div>
+  </div>
+</div>
+
 <!-- STATUS BAR -->
 <div id="statusbar">
   <span><span class="sb-dot"></span>TRADINGVIEW DATA</span>
@@ -1563,7 +2035,7 @@ body > * {
   <span id="sb-time"></span>
 </div>
 
-<script type="module" src="js/app.js?v=20260605-backend-quota"></script>
+<script type="module" src="js/app.js?v=20260608-usage-notice-hide-today"></script>
 
 </body>
 </html>

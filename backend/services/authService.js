@@ -10,7 +10,11 @@ function publicUser(user) {
     name: user.name,
     email: user.email,
     plan: user.plan || 'Free',
+    planExpiresAt: user.planExpiresAt || null,
     verified: Boolean(user.verified),
+    telegramId: user.telegramId || '',
+    telegramUsername: user.telegramUsername || '',
+    telegramVerified: Boolean(user.telegramVerified),
     createdAt: user.createdAt,
   };
 }
@@ -89,6 +93,10 @@ async function register({ name, email, password, otp }) {
     passwordHash: hashPassword(String(password)),
     plan: 'Free',
     verified: true,
+    telegramId: '',
+    telegramUsername: '',
+    telegramVerified: false,
+    planExpiresAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
@@ -106,6 +114,10 @@ async function login({ user, password }) {
       email: 'admin@tradex.ai',
       plan: 'Premium',
       verified: true,
+      telegramId: '',
+      telegramUsername: '',
+      telegramVerified: true,
+      planExpiresAt: null,
       createdAt: new Date().toISOString(),
     });
   }
@@ -138,12 +150,29 @@ async function resetPassword({ email, otp, password }) {
   return publicUser(updatedUser);
 }
 
-async function updatePlan({ email, plan }) {
+function resolvePlanExpiry({ plan, durationDays, expiresAt }) {
+  if (plan === 'Free') return null;
+
+  if (expiresAt) {
+    const parsed = new Date(expiresAt);
+    if (Number.isNaN(parsed.getTime())) throw new Error('Ngày hết hạn không hợp lệ');
+    return parsed.toISOString();
+  }
+
+  const days = Number(durationDays || 0);
+  if (Number.isFinite(days) && days > 0) {
+    return new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+  }
+
+  return null;
+}
+
+async function updatePlan({ email, plan, durationDays, expiresAt, telegramVerified }) {
   const normalizedEmail = validateEmail(email);
-  const nextPlan = String(plan || '').trim();
+  const requestedPlan = String(plan || '').trim();
   const allowedPlans = new Set(['Free', 'Pro', 'Premium']);
 
-  if (!allowedPlans.has(nextPlan)) {
+  if (requestedPlan && !allowedPlans.has(requestedPlan)) {
     throw new Error('Gói tài khoản không hợp lệ');
   }
 
@@ -153,16 +182,28 @@ async function updatePlan({ email, plan }) {
       email: normalizedEmail,
       plan: 'Premium',
       verified: true,
+      telegramId: '',
+      telegramUsername: '',
+      telegramVerified: true,
+      planExpiresAt: null,
       createdAt: new Date().toISOString(),
     });
   }
 
   const existingUser = await repository.getUserByEmail(normalizedEmail);
   if (!existingUser) throw new Error('Không tìm thấy tài khoản');
+  const nextPlan = requestedPlan || existingUser.plan || 'Free';
+  const shouldUpdateExpiry = Boolean(requestedPlan || durationDays || expiresAt);
 
   const updatedUser = {
     ...existingUser,
     plan: nextPlan,
+    planExpiresAt: shouldUpdateExpiry
+      ? resolvePlanExpiry({ plan: nextPlan, durationDays, expiresAt })
+      : (existingUser.planExpiresAt || null),
+    telegramVerified: typeof telegramVerified === 'boolean'
+      ? telegramVerified
+      : Boolean(existingUser.telegramVerified),
     updatedAt: new Date().toISOString(),
   };
   await repository.saveUser(normalizedEmail, updatedUser);

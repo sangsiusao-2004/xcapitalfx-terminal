@@ -18,6 +18,7 @@ const MARKET_REFRESH_MS = 3000;
 const SIGNAL_HISTORY_KEY = 'tx_signal_history';
 const SIGNAL_HISTORY_LIMIT = 10;
 const SIGNAL_USAGE_KEY = 'tx_signal_usage';
+const USAGE_NOTICE_HIDE_KEY = 'tx_usage_notice_hidden_date';
 const PLAN_CONFIGS = {
   Free: {
     dailyLimit: 5,
@@ -41,6 +42,8 @@ const PLAN_CONFIGS = {
 let signalHistory = [];
 let analyzeCooldownTimer = null;
 let backendCooldownUntil = 0;
+let phoneNudgeDismissedWhileModalOpen = false;
+let phoneNudgeHiddenByProfileMenu = false;
 
 function tvInterval(tf) {
   const map = {
@@ -211,6 +214,75 @@ function syncMobileProfileDock() {
     const spacer = sidebar.querySelector('.sidebar-spacer');
     sidebar.insertBefore(dock, spacer?.nextSibling || null);
   }
+  updatePhoneVerifyNudge();
+}
+
+function updatePhoneVerifyNudge() {
+  const dock = document.querySelector('.profile-dock');
+  if (!dock) return;
+
+  let nudge = document.getElementById('phone-verify-nudge');
+  const user = getStoredUser();
+  if (user.telegramVerified || phoneNudgeDismissedWhileModalOpen || phoneNudgeHiddenByProfileMenu) {
+    nudge?.remove();
+    dock.classList.remove('needs-phone-verify');
+    return;
+  }
+
+  dock.classList.add('needs-phone-verify');
+  if (!nudge) {
+    nudge = document.createElement('button');
+    nudge.id = 'phone-verify-nudge';
+    nudge.className = 'phone-verify-nudge';
+    nudge.type = 'button';
+    nudge.innerHTML = `
+      <span class="phone-verify-nudge-icon">✦</span>
+      <span class="phone-verify-nudge-copy">
+        <strong>Xác minh Tài Khoản</strong>
+        <span>Nhận thêm lượt miễn phí.</span>
+      </span>
+    `;
+    nudge.addEventListener('click', () => {
+      openPhoneVerification();
+    });
+    document.body.appendChild(nudge);
+  }
+
+  const rect = dock.getBoundingClientRect();
+  const mobile = isMobileLayout();
+  nudge.classList.toggle('mobile', mobile);
+  const nudgeWidth = Math.min(mobile ? 238 : 292, window.innerWidth - 24);
+  const profileCenterX = rect.left + rect.width / 2;
+  const left = mobile
+    ? Math.max(12, Math.min(profileCenterX - nudgeWidth + 24, window.innerWidth - nudgeWidth - 8))
+    : Math.max(12, Math.min(rect.left + 10, window.innerWidth - nudgeWidth - 8));
+  const top = mobile
+    ? Math.min(window.innerHeight - 86, rect.bottom + 12)
+    : Math.max(12, rect.top - 78);
+  const arrowLeft = Math.max(18, Math.min(profileCenterX - left - 7, nudgeWidth - 24));
+  nudge.style.left = `${left}px`;
+  nudge.style.top = `${top}px`;
+  nudge.style.setProperty('--nudge-arrow-left', `${arrowLeft}px`);
+}
+
+function updateTelegramVerifyUi(user = getStoredUser()) {
+  const verifyButton = document.querySelector('[data-profile-action="phone"]');
+  if (verifyButton) {
+    verifyButton.hidden = Boolean(user.telegramVerified);
+  }
+}
+
+function openTelegramAdmin() {
+  const username = 'ryantranforex';
+  const appUrl = `tg://resolve?domain=${username}`;
+  const webUrl = `https://t.me/${username}`;
+
+  window.location.href = appUrl;
+  setTimeout(() => {
+    if (!document.hidden) {
+      window.open(webUrl, '_blank', 'noopener');
+    }
+  }, 900);
 }
 
 function syncMobileTimeframes() {
@@ -244,9 +316,13 @@ function getStoredUser() {
       name: parsed.name || parsed.email?.split('@')[0] || 'Sang',
       email: parsed.email || 'guest@xcapital.ai',
       plan: parsed.plan || localStorage.getItem('tx_plan') || 'Free',
+      planExpiresAt: parsed.planExpiresAt || null,
+      telegramId: parsed.telegramId || '',
+      telegramUsername: parsed.telegramUsername || '',
+      telegramVerified: Boolean(parsed.telegramVerified),
     };
   } catch (err) {
-    return { name: 'Sang', email: 'guest@xcapital.ai', plan: localStorage.getItem('tx_plan') || 'Free' };
+    return { name: 'Sang', email: 'guest@xcapital.ai', plan: localStorage.getItem('tx_plan') || 'Free', planExpiresAt: null, telegramId: '', telegramUsername: '', telegramVerified: false };
   }
 }
 
@@ -288,7 +364,7 @@ async function setPlan(plan) {
       </div>
       <div class="modal-info-card">
         <div class="modal-info-label">Liên hệ nâng cấp</div>
-        <div class="modal-info-value">@ryantranforex</div>
+        <div class="modal-info-value"><button class="modal-info-link" data-modal-action="support-telegram" type="button">@ryantranforex</button></div>
       </div>
     `);
     return false;
@@ -299,16 +375,19 @@ function renderProfile() {
   currentUser = getStoredUser();
   const plan = currentPlan();
   const abbr = initials(currentUser.name);
+  const profilePlan = currentUser.telegramVerified ? plan : 'Verify Telegram 2/2';
 
   [
     ['profile-avatar', abbr],
     ['profile-name', currentUser.name],
-    ['profile-plan', plan],
+    ['profile-plan', profilePlan],
   ].forEach(([id, text]) => {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
   });
   updateSignalUsageBadge();
+  updatePhoneVerifyNudge();
+  updateTelegramVerifyUi(currentUser);
 }
 
 function openProfileModal(title, bodyHtml) {
@@ -316,6 +395,8 @@ function openProfileModal(title, bodyHtml) {
   const titleEl = document.getElementById('profile-modal-title');
   const bodyEl = document.getElementById('profile-modal-body');
   if (!modal || !titleEl || !bodyEl) return;
+  phoneNudgeDismissedWhileModalOpen = true;
+  document.getElementById('phone-verify-nudge')?.remove();
   titleEl.textContent = title;
   bodyEl.innerHTML = bodyHtml;
   modal.classList.add('open');
@@ -324,35 +405,63 @@ function openProfileModal(title, bodyHtml) {
 
 function closeProfileModal() {
   document.getElementById('profile-modal')?.classList.remove('open');
+  phoneNudgeDismissedWhileModalOpen = false;
+  updatePhoneVerifyNudge();
 }
 
 function openProfileInfo() {
   const plan = currentPlan();
-  openProfileModal('Hồ sơ tài khoản', `
+  const telegramVerified = Boolean(currentUser.telegramVerified);
+  openProfileModal('Ho so tai khoan', `
     <div class="modal-info-card modal-profile-row">
       <span class="profile-avatar">${escapeHtml(initials(currentUser.name))}</span>
       <div>
         <div class="modal-info-value" style="font-size:20px">${escapeHtml(currentUser.name)}</div>
-        <div class="modal-info-label">${escapeHtml(plan)} Account</div>
+        <div class="modal-info-label">${escapeHtml(telegramVerified ? plan : 'Email-only')} Account</div>
       </div>
     </div>
     <div class="modal-info-card">
-      <div class="modal-info-label">Tên khách hàng</div>
+      <div class="modal-info-label">Ten khach hang</div>
       <div class="modal-info-value">${escapeHtml(currentUser.name)}</div>
     </div>
     <div class="modal-info-card">
-      <div class="modal-info-label">Email đăng nhập</div>
+      <div class="modal-info-label">Email dang nhap</div>
       <div class="modal-info-value">${escapeHtml(currentUser.email)}</div>
     </div>
     <div class="modal-info-card">
-      <div class="modal-info-label">Trạng thái tài khoản</div>
-      <div class="modal-info-value">Đã xác minh email</div>
+      <div class="modal-info-label">Trang thai tai khoan</div>
+      <div class="modal-info-value">${telegramVerified ? 'Da xac minh email va Telegram' : 'Da xac minh email, chua xac minh Telegram'}</div>
     </div>
     <div class="modal-info-card">
-      <div class="modal-info-label">Quyền truy cập</div>
-      <div class="modal-info-value">Chat bot phân tích vàng, xem xu hướng thị trường, lưu lịch sử demo.</div>
+      <div class="modal-info-label">Telegram</div>
+      <div class="modal-info-value">${telegramVerified ? 'Da xac minh' : 'Chua xac minh'}</div>
+      ${telegramVerified ? '' : '<button class="modal-action" data-modal-action="phone" type="button">Xac minh Telegram</button>'}
+    </div>
+    <div class="modal-info-card">
+      <div class="modal-info-label">Quyen truy cap</div>
+      <div class="modal-info-value">${telegramVerified ? 'Goi Free day du: 5 luot/ngay, cho 90 giay giua cac luot.' : 'Dung thu: 2 luot/ngay, cho 120 phut giua cac luot. Xac minh Telegram de mo goi Free.'}</div>
     </div>
   `);
+}
+
+function openPhoneVerification() {
+  openTelegramAdmin();
+}
+
+function openUsageNotice() {
+  if (localStorage.getItem(USAGE_NOTICE_HIDE_KEY) === todayKey()) return;
+  document.getElementById('usage-notice')?.classList.add('open');
+}
+
+function closeUsageNotice() {
+  document.getElementById('usage-notice')?.classList.remove('open');
+}
+
+function acceptUsageNotice() {
+  if (document.getElementById('usage-notice-hide-today')?.checked) {
+    localStorage.setItem(USAGE_NOTICE_HIDE_KEY, todayKey());
+  }
+  closeUsageNotice();
 }
 
 function openUpgradePlans() {
@@ -407,7 +516,7 @@ function openUpgradePlans() {
             ${plan.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
           </ul>
           <button class="plan-action ${activePlan === plan.name ? 'active' : ''}" data-modal-action="select-plan" data-plan="${escapeHtml(plan.name)}" type="button">
-            ${activePlan === plan.name ? 'ĐANG SỬ DỤNG' : `CHỌN ${escapeHtml(plan.name).toUpperCase()}`}
+            ${activePlan === plan.name ? 'ĐANG SỬ DỤNG' : plan.name === 'Free' ? 'GÓI MIỄN PHÍ' : 'LIÊN HỆ TELEGRAM'}
           </button>
         </div>
       `).join('')}
@@ -457,7 +566,7 @@ function openSupport() {
     </div>
     <div class="modal-info-card">
       <div class="modal-info-label">Telegram hỗ trợ</div>
-      <div class="modal-info-value">@ryantranforex</div>
+      <div class="modal-info-value"><button class="modal-info-link" data-modal-action="support-telegram" type="button">@ryantranforex</button></div>
     </div>
     <div class="modal-info-card">
       <div class="modal-info-label">Lưu ý vận hành</div>
@@ -506,10 +615,12 @@ function toggleProfileMenu(forceOpen) {
   const menu = document.getElementById('profile-menu');
   if (!menu) return;
   const shouldOpen = typeof forceOpen === 'boolean' ? forceOpen : !menu.classList.contains('open');
+  phoneNudgeHiddenByProfileMenu = shouldOpen;
   menu.classList.toggle('open', shouldOpen);
   if (shouldOpen) {
     renderProfile();
   }
+  updatePhoneVerifyNudge();
 }
 
 function handleProfileClick(event) {
@@ -518,6 +629,8 @@ function handleProfileClick(event) {
   const action = actionBtn.dataset.profileAction;
   if (action === 'upgrade') {
     openUpgradePlans();
+  } else if (action === 'phone') {
+    openPhoneVerification();
   } else if (action === 'profile') {
     openProfileInfo();
   } else if (action === 'settings') {
@@ -532,12 +645,16 @@ async function handleProfileModalClick(event) {
   const action = actionEl?.dataset.modalAction;
   if (action === 'password') openPasswordForm();
   else if (action === 'settings') openSettings();
+  else if (action === 'profile') openProfileInfo();
+  else if (action === 'phone') openPhoneVerification();
+  else if (action === 'verify-telegram') openTelegramAdmin();
+  else if (action === 'support-telegram') openTelegramAdmin();
   else if (action === 'submit-password') submitPasswordChange();
   else if (action === 'select-plan') {
     const plan = actionEl.dataset.plan;
-    if (PLAN_CONFIGS[plan]) {
-      const updated = await setPlan(plan);
-      if (updated) openUpgradePlans();
+    if (plan === currentPlan()) return;
+    if (plan === 'Pro' || plan === 'Premium') {
+      openTelegramAdmin();
     }
   }
 }
@@ -587,6 +704,9 @@ function saveSignalUsage(usage) {
 }
 
 function getPlanRules() {
+  if (!getStoredUser().telegramVerified) {
+    return { dailyLimit: 2, cooldownSec: 120 * 60 };
+  }
   return PLAN_CONFIGS[currentPlan()] || PLAN_CONFIGS.Free;
 }
 
@@ -609,19 +729,40 @@ async function updateSignalUsageBadge() {
   const user = getStoredUser();
   try {
     const usage = await getJson(`/api/signal/usage?email=${encodeURIComponent(user.email)}`);
+    const syncedUser = {
+      ...user,
+      plan: usage.plan || user.plan,
+      planExpiresAt: usage.planExpiresAt || null,
+      telegramVerified: Boolean(usage.telegramVerified),
+    };
+    sessionStorage.setItem('tx_user', JSON.stringify(syncedUser));
+    currentUser = syncedUser;
+    updateTelegramVerifyUi(syncedUser);
+
     if (usage.cooldownLeftSec > 0) {
       backendCooldownUntil = Date.now() + usage.cooldownLeftSec * 1000;
     }
-    badge.textContent = usage.dailyLimit === null
-      ? `${usage.plan}: vô hạn`
-      : `${usage.plan}: ${usage.remaining}/${usage.dailyLimit} lượt`;
+    const isTelegramVerified = Boolean(usage.telegramVerified);
+    const label = isTelegramVerified ? usage.plan : 'Verify Telegram';
+    const dailyLimit = isTelegramVerified ? usage.dailyLimit : 2;
+    const remaining = isTelegramVerified ? usage.remaining : Math.max(0, dailyLimit - Number(usage.used || 0));
+    badge.textContent = dailyLimit === null
+      ? `${label}: vo han`
+      : `${label}: ${remaining}/${dailyLimit} luot`;
+    const planEl = document.getElementById('profile-plan');
+    if (planEl && !isTelegramVerified && dailyLimit !== null) {
+      planEl.textContent = `Verify Telegram ${remaining}/${dailyLimit}`;
+    } else if (planEl && isTelegramVerified) {
+      planEl.textContent = usage.plan || currentPlan();
+    }
+    updatePhoneVerifyNudge();
   } catch (err) {
     const plan = currentPlan();
     const rules = getPlanRules();
     const remaining = getRemainingSignalUses();
     badge.textContent = Number.isFinite(remaining)
-      ? `${plan}: ${remaining}/${rules.dailyLimit} lượt`
-      : `${plan}: vô hạn`;
+      ? `${plan}: ${remaining}/${rules.dailyLimit} luot`
+      : `${plan}: vo han`;
   }
 }
 
@@ -741,6 +882,7 @@ function calculateRiskPlan(signal) {
   const positionSize = riskAmount / stopDistance;
   const rewardDistance = Number.isFinite(takeProfit1) ? Math.abs(takeProfit1 - entry) : 0;
   const rr = rewardDistance ? rewardDistance / stopDistance : 0;
+  const rewardAmount1 = riskAmount * rr;
 
   return {
     balance,
@@ -749,6 +891,7 @@ function calculateRiskPlan(signal) {
     stopDistance,
     positionSize,
     rr,
+    rewardAmount1,
   };
 }
 
@@ -823,11 +966,15 @@ function renderHistorySignal(id) {
 
 function renderSignalResult(result) {
   const sideClass = result.direction.toLowerCase();
-  const directionText = result.direction === 'BUY'
-    ? '▲ BUY'
-    : result.direction === 'SELL' ? '▼ SELL' : '◆ WAIT';
+  const actionText = result.direction === 'WAIT'
+    ? 'WAIT'
+    : (result.orderType || result.direction);
+  const directionIcon = result.direction === 'BUY'
+    ? '▲'
+    : result.direction === 'SELL' ? '▼' : '◆';
+  const marketText = `${result.symbol || result.sym || '--'} · ${result.timeframe || result.tf || currentTf}`;
   const orderRows = result.direction === 'WAIT'
-    ? `<div class="setup-note">Không mở lệnh ngay. Chờ phá vỡ vùng high/low gần nhất rồi retest có xác nhận.</div>`
+    ? `<div class="setup-note">${escapeHtml(result.mtf?.reason || 'Không mở lệnh ngay. Chờ phá vỡ vùng high/low gần nhất rồi retest có xác nhận.')}</div>`
     : `
       <div class="sig-row"><span class="sig-row-label">ENTRY</span><span class="sig-row-val val-entry">${formatPrice(result.entry)}</span></div>
       <div class="sig-row"><span class="sig-row-label">STOP LOSS</span><span class="sig-row-val val-sl">${formatPrice(result.stopLoss)}</span></div>
@@ -839,12 +986,8 @@ function renderSignalResult(result) {
     <div class="ai-chat-meta"><span>BOT AI SIGNAL</span><span>${new Date().toLocaleTimeString('vi-VN', { hour12: false })}</span></div>
     <div class="signal-card ${sideClass}">
       <div class="sig-top">
-        <div class="sig-direction">${directionText}</div>
-        <div>
-          <div class="sig-sym">${escapeHtml(result.symbol || result.sym)} · ${escapeHtml(result.timeframe || result.tf)}</div>
-          <div class="sig-time">${escapeHtml(result.source || 'MARKET + AI')}</div>
-          <span class="order-type">${escapeHtml(result.orderType || result.direction)}</span>
-        </div>
+        <div class="sig-direction">${directionIcon} ${escapeHtml(actionText)}</div>
+        <span class="order-type">${escapeHtml(marketText)}</span>
       </div>
       ${orderRows}
       <div class="sig-conf">
@@ -867,6 +1010,7 @@ async function runSignalAnalysis() {
   const market = watchSymbols.find(w => w.sym === sym)?.market || 'crypto';
   const user = getStoredUser();
   const customerName = user.name;
+  const riskSettings = getRiskSettings();
   let analysisCompleted = false;
 
   if (btn) {
@@ -883,8 +1027,9 @@ async function runSignalAnalysis() {
     <div class="ai-a-text loading">Đang quét thị trường...</div>
     <div class="scan-list">
       <div class="scan-step">Fetching market data</div>
+      <div class="scan-step">Reading 1h / 15m / 5m structure</div>
       <div class="scan-step">Calculating EMA / RSI / ATR / MACD</div>
-      <div class="scan-step">Reading liquidity and premium/discount</div>
+      <div class="scan-step">Filtering liquidity, risk and MTF alignment</div>
       <div class="scan-step">Generating AI conclusion</div>
     </div>
   `);
@@ -898,7 +1043,7 @@ async function runSignalAnalysis() {
 
     await fetchWatchPrices(watchSymbols, watchPrices);
     refreshMarketViews();
-    const result = await postJson('/api/ai/signal', { symbol: sym, timeframe: tf, userEmail: user.email });
+    const result = await postJson('/api/ai/signal', { symbol: sym, timeframe: tf, userEmail: user.email, riskSettings });
     const riskPlan = calculateRiskPlan(result);
     const stored = rememberSignal(result, riskPlan);
     if (result.usage?.cooldownSec) {
@@ -912,7 +1057,7 @@ async function runSignalAnalysis() {
       const message = err.message === 'Failed to fetch'
         ? 'Không kết nối được backend AI Signal. Hãy chạy node backend/server.js rồi mở http://localhost:3000/login.html để bot lấy dữ liệu XAU/USD và thị trường.'
         : (err.message || err);
-      const isLimitMessage = /hết lượt|chờ thêm|phân tích tiếp|Nâng cấp tài khoản/i.test(message);
+      const isLimitMessage = /cooldown|limit|quota|remaining|het luot|cho them|hết lượt|chờ thêm/i.test(message);
       loading.innerHTML = `
         <div class="ai-chat-meta"><span>BOT AI SIGNAL</span><span>${isLimitMessage ? 'LIMIT' : 'ERROR'}</span></div>
         <div class="ai-a-text" style="color:${isLimitMessage ? 'var(--yellow)' : 'var(--red)'}">${escapeHtml(isLimitMessage ? message : `Không lấy được dữ liệu để phân tích: ${message}`)}</div>`;
@@ -1101,6 +1246,11 @@ window.addEventListener('load', async () => {
     if (event.target.id === 'profile-modal') closeProfileModal();
     else handleProfileModalClick(event);
   });
+  document.getElementById('usage-notice-accept')?.addEventListener('click', acceptUsageNotice);
+  document.getElementById('usage-notice')?.addEventListener('click', event => {
+    if (event.target.id === 'usage-notice') closeUsageNotice();
+    if (event.target.closest('[data-notice-action="telegram"]')) openTelegramAdmin();
+  });
   document.addEventListener('click', event => {
     if (!event.target.closest('#profile-menu') && !event.target.closest('#profile-trigger')) {
       toggleProfileMenu(false);
@@ -1130,6 +1280,7 @@ window.addEventListener('load', async () => {
   });
   window.addEventListener('resize', () => {
     syncMobileProfileDock();
+    updatePhoneVerifyNudge();
     if (!isMobileLayout()) {
       document.body.classList.remove('signal-open');
       toggleMobileMarketMenu(false);
@@ -1137,5 +1288,6 @@ window.addEventListener('load', async () => {
   });
 
   document.getElementById('xau-btn')?.addEventListener('click', () => window.switchToXAU());
+  setTimeout(openUsageNotice, 450);
   window.testBTC = () => selectSym('BTCUSDT');
 });

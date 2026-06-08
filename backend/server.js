@@ -23,6 +23,26 @@ const MIME_TYPES = {
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
 };
+const STATIC_ALIASES = new Map([
+  ['', 'login.html'],
+  ['/', 'login.html'],
+  ['/login', 'login.html'],
+  ['/dang-nhap', 'login.html'],
+  ['/dang nhap', 'login.html'],
+  ['/đăng-nhập', 'login.html'],
+  ['/đăng nhập', 'login.html'],
+  ['/register', 'login.html'],
+  ['/dang-ky', 'login.html'],
+  ['/dang ky', 'login.html'],
+  ['/đăng-ký', 'login.html'],
+  ['/đăng ký', 'login.html'],
+  ['/home', 'index.html'],
+  ['/trang-chu', 'index.html'],
+  ['/trang chu', 'index.html'],
+  ['/trang-chủ', 'index.html'],
+  ['/trang chủ', 'index.html'],
+  ['/admin', 'admin.html'],
+]);
 
 function readRequestBody(req) {
   return new Promise((resolve, reject) => {
@@ -126,8 +146,10 @@ async function routeApi(req, res, url) {
 
   if (req.method === 'POST' && url.pathname === '/api/ai/chat') {
     const body = await readRequestBody(req);
+    await signalQuotaService.assertCanAnalyze(body.userEmail);
     const data = await aiService.askTradingAssistant(body);
-    sendJson(res, 200, { ok: true, data });
+    const usage = await signalQuotaService.recordUsage(body.userEmail);
+    sendJson(res, 200, { ok: true, data: { ...data, usage } });
     return;
   }
 
@@ -151,7 +173,8 @@ function sendStatic(req, res, url) {
   }
 
   const requestedPath = decodeURIComponent(url.pathname);
-  const relativePath = requestedPath === '/' ? 'login.html' : requestedPath.replace(/^\/+/, '');
+  const relativePath = STATIC_ALIASES.get(requestedPath)
+    || requestedPath.replace(/^\/+/, '');
   const filePath = path.resolve(ROOT_DIR, relativePath);
 
   if (!filePath.startsWith(ROOT_DIR + path.sep)) {
