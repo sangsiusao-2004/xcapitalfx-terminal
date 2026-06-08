@@ -18,7 +18,7 @@ const MARKET_REFRESH_MS = 3000;
 const SIGNAL_HISTORY_KEY = 'tx_signal_history';
 const SIGNAL_HISTORY_LIMIT = 10;
 const SIGNAL_USAGE_KEY = 'tx_signal_usage';
-const USAGE_NOTICE_HIDE_KEY = 'tx_usage_notice_hidden_date_v2';
+const USAGE_NOTICE_HIDE_KEY_PREFIX = 'tx_usage_notice_hidden_date_v4';
 const PLAN_CONFIGS = {
   Free: {
     dailyLimit: 5,
@@ -452,15 +452,20 @@ function openUsageNotice() {
   document.getElementById('usage-notice')?.classList.add('open');
 }
 
+function usageNoticeStorageKey() {
+  const email = getStoredUser().email || 'guest';
+  return `${USAGE_NOTICE_HIDE_KEY_PREFIX}:${email}`;
+}
+
 function shouldShowUsageNotice() {
-  return localStorage.getItem(USAGE_NOTICE_HIDE_KEY) !== todayKey();
+  return localStorage.getItem(usageNoticeStorageKey()) !== todayKey();
 }
 
 function scheduleUsageNotice() {
   if (!shouldShowUsageNotice()) return;
-  requestAnimationFrame(() => {
-    setTimeout(openUsageNotice, 650);
-  });
+  setTimeout(() => {
+    if (shouldShowUsageNotice()) openUsageNotice();
+  }, 650);
 }
 
 function closeUsageNotice() {
@@ -469,7 +474,7 @@ function closeUsageNotice() {
 
 function acceptUsageNotice() {
   if (document.getElementById('usage-notice-hide-today')?.checked) {
-    localStorage.setItem(USAGE_NOTICE_HIDE_KEY, todayKey());
+    localStorage.setItem(usageNoticeStorageKey(), todayKey());
   }
   closeUsageNotice();
 }
@@ -1300,4 +1305,10 @@ window.addEventListener('load', async () => {
   document.getElementById('xau-btn')?.addEventListener('click', () => window.switchToXAU());
   scheduleUsageNotice();
   window.testBTC = () => selectSym('BTCUSDT');
+});
+
+window.addEventListener('pageshow', () => {
+  if (sessionStorage.getItem('tx_auth')) {
+    scheduleUsageNotice();
+  }
 });
