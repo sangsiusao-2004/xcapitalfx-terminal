@@ -145,6 +145,15 @@ async function routeApi(req, res, url) {
     return;
   }
 
+  if (req.method === 'GET' && url.pathname === '/api/market/technical-summary') {
+    const data = await marketService.getTechnicalSummary(
+      url.searchParams.get('symbol'),
+      url.searchParams.get('interval')
+    );
+    sendJson(res, 200, { ok: true, data });
+    return;
+  }
+
   if (req.method === 'POST' && url.pathname === '/api/ai/chat') {
     const body = await readRequestBody(req);
     await signalQuotaService.assertCanAnalyze(body.userEmail);

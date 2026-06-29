@@ -4,20 +4,26 @@ import { checkAuth, logout } from './auth.js';
 import { updateClock, renderSessions } from './utils.js';
 import { renderWatchlist, fetchWatchPrices, buildTicker } from './watchlist.js';
 import { getJson, postJson } from './request/apiClient.js';
+import { getTicker24h } from './services/marketService.js';
 
 checkAuth();
 
 let currentSym = CONFIG.DEFAULT_SYMBOL;
 let currentTf = CONFIG.DEFAULT_TF;
 let chartMode = 'crypto';
+let currentView = 'main';
+let realtimeChartMounted = false;
 let currentUser = { name: 'Sang', email: 'guest@xcapital.ai' };
 
 const watchPrices = {};
 const watchSymbols = CONFIG.WATCH_SYMBOLS;
 const MARKET_REFRESH_MS = 3000;
+const REALTIME_XAU_REFRESH_MS = 1500;
+const REALTIME_TECHNICAL_REFRESH_MS = 12000;
 const SIGNAL_HISTORY_KEY = 'tx_signal_history';
 const SIGNAL_HISTORY_LIMIT = 10;
 const SIGNAL_USAGE_KEY = 'tx_signal_usage';
+const THEME_KEY = 'tx_ui_theme';
 const USAGE_NOTICE_HIDE_KEY_PREFIX = 'tx_usage_notice_hidden_date_v4';
 const PLAN_CONFIGS = {
   Free: {
@@ -44,12 +50,47 @@ let analyzeCooldownTimer = null;
 let backendCooldownUntil = 0;
 let phoneNudgeDismissedWhileModalOpen = false;
 let phoneNudgeHiddenByProfileMenu = false;
+let supportLastPrice = null;
+let realtimeTechnicalSummary = null;
+let realtimeTechnicalKey = '';
+let realtimeTechnicalPending = false;
+let realtimePriceTimer = null;
+
+function getUiTheme() {
+  const storedTheme = localStorage.getItem(THEME_KEY);
+  return storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
+}
+
+function applyUiTheme(theme = getUiTheme()) {
+  const cleanTheme = theme === 'light' ? 'light' : 'dark';
+  if (!localStorage.getItem(THEME_KEY)) {
+    localStorage.setItem(THEME_KEY, 'dark');
+  }
+  document.body.classList.toggle('theme-light', cleanTheme === 'light');
+  document.querySelectorAll('[data-theme-option]').forEach(button => {
+    button.classList.toggle('active', button.dataset.themeOption === cleanTheme);
+  });
+}
+
+function setUiTheme(theme) {
+  const cleanTheme = theme === 'light' ? 'light' : 'dark';
+  localStorage.setItem(THEME_KEY, cleanTheme);
+  applyUiTheme(cleanTheme);
+  if (currentView === 'realtime') {
+    realtimeChartMounted = false;
+    mountRealtimeXauChart(true);
+  }
+}
+
+applyUiTheme();
+let realtimeTechnicalTimer = null;
 
 function tvInterval(tf) {
   const map = {
     '1m': '1',
     '5m': '5',
     '15m': '15',
+    '30m': '30',
     '1h': '60',
     '4h': '240',
     '1d': 'D',
@@ -117,11 +158,165 @@ function updateHeaderFromWatchPrice(sym = currentSym) {
   if (vEl) vEl.textContent = formatVolume(data.volume);
 }
 
+function updateRealtimeSupportPanel() {
+  const data = watchPrices.XAUUSD;
+  const priceEl = document.getElementById('support-price');
+  const changeEl = document.getElementById('support-change');
+  const bidAskEl = document.getElementById('support-bidask');
+  const highEl = document.getElementById('support-high');
+  const lowEl = document.getElementById('support-low');
+  const rangeEl = document.getElementById('support-range');
+  const updatedEl = document.getElementById('support-updated');
+  const trendStateEl = document.getElementById('support-trend-state');
+  const trendNoteEl = document.getElementById('support-trend-note');
+  const trendBarEl = document.getElementById('support-trend-bar');
+  const trendLabelEl = document.getElementById('support-trend-label');
+  const volatilityEl = document.getElementById('support-volatility');
+  const referenceEl = document.getElementById('support-reference');
+  const confidenceEl = document.getElementById('support-confidence');
+
+  if (!priceEl || !changeEl || !bidAskEl || !highEl || !lowEl || !rangeEl || !updatedEl || !trendStateEl || !trendNoteEl || !trendBarEl || !trendLabelEl || !volatilityEl || !referenceEl || !confidenceEl) return;
+
+  if (!data) {
+    priceEl.textContent = '--';
+    changeEl.textContent = '--';
+    bidAskEl.textContent = '-- / --';
+    highEl.textContent = '--';
+    lowEl.textContent = '--';
+    rangeEl.textContent = '--';
+    updatedEl.textContent = '--';
+    return;
+  }
+
+  const price = Number(data.price);
+  const change = Number(data.change || 0);
+  const priceState = supportLastPrice == null || price === supportLastPrice
+    ? 'flat'
+    : price > supportLastPrice ? 'up' : 'dn';
+  const summary = realtimeTechnicalSummary;
+  const fastChange = Number(data.previousPrice) > 0
+    ? ((price - Number(data.previousPrice)) / Number(data.previousPrice)) * 100
+    : 0;
+  let state = summary?.direction || 'WAIT';
+  if (summary && Math.abs(fastChange) >= 0.018) {
+    if (fastChange > 0 && summary.direction !== 'SELL') state = 'BUY';
+    if (fastChange < 0 && summary.direction !== 'BUY') state = 'SELL';
+  }
+  const stateClass = state === 'BUY' ? 'buy' : state === 'SELL' ? 'sell' : 'wait';
+  const label = state === 'BUY'
+    ? 'Trend tăng đang kích hoạt'
+    : state === 'SELL'
+      ? 'Trend giảm đang kích hoạt'
+      : (summary?.status || 'Thị trường sideways');
+  const note = summary
+    ? state === 'BUY'
+      ? 'AI phát hiện lực mua đang chiếm ưu thế. Theo dõi nhịp hồi về EMA/vùng hỗ trợ trước khi xác nhận follow trend.'
+      : state === 'SELL'
+        ? 'AI phát hiện lực bán đang chiếm ưu thế. Theo dõi nhịp hồi lên EMA/vùng kháng cự trước khi xác nhận follow trend.'
+        : summary.note
+    : 'AI đang tổng hợp dữ liệu kỹ thuật đa chỉ báo để xác định xu hướng và vùng xác nhận phù hợp.';
+  const volatility = Number(summary?.volatility ?? Math.abs(change));
+  const confidence = Math.max(35, Math.min(96, Number(summary?.confidence || 45) + Math.min(8, Math.abs(fastChange) * 180)));
+  const barWidth = Math.max(18, Math.min(100, confidence));
+  const stars = Math.max(1, Math.min(5, Math.round(confidence / 20)));
+
+  priceEl.textContent = formatPrice(data.price);
+  priceEl.className = `support-price ${priceState}`;
+  changeEl.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+  changeEl.className = `support-change ${change >= 0 ? 'up' : 'dn'}`;
+  const spread = Math.max(price * 0.00008, 0.25);
+  const bid = price - spread / 2;
+  const ask = price + spread / 2;
+  const high = Number(data.high);
+  const low = Number(data.low);
+  bidAskEl.textContent = `${formatPrice(bid)} / ${formatPrice(ask)}`;
+  bidAskEl.className = priceState;
+  highEl.textContent = formatPrice(high);
+  lowEl.textContent = formatPrice(low);
+  rangeEl.textContent = Number.isFinite(high) && Number.isFinite(low) ? formatPrice(high - low) : '--';
+  rangeEl.className = change >= 0 ? 'up' : 'dn';
+  updatedEl.textContent = new Date().toLocaleTimeString('vi-VN', { hour12: false });
+  trendStateEl.textContent = state;
+  trendStateEl.className = `trend-state ${stateClass}`;
+  trendNoteEl.textContent = note;
+  trendLabelEl.textContent = label;
+  trendLabelEl.className = stateClass;
+  volatilityEl.textContent = volatility.toFixed(2);
+  volatilityEl.className = stateClass;
+  referenceEl.textContent = `XAUUSD ${currentTf}`;
+  referenceEl.className = stateClass;
+  confidenceEl.textContent = `${'★'.repeat(stars).padEnd(5, '☆')} ${confidence}%`;
+  confidenceEl.className = stateClass;
+  trendBarEl.style.width = `${barWidth}%`;
+  trendBarEl.className = `trend-bar-fill ${stateClass}`;
+  supportLastPrice = price;
+}
+
+async function refreshRealtimeXauPrice() {
+  if (currentView !== 'realtime') return;
+  try {
+    const ticker = await getTicker24h('XAUUSD');
+    const prev = watchPrices.XAUUSD;
+    watchPrices.XAUUSD = {
+      price: Number(ticker.price),
+      change: Number(ticker.change),
+      open: Number(ticker.open),
+      high: Number(ticker.high),
+      low: Number(ticker.low),
+      volume: Number(ticker.volume),
+      previousPrice: prev?.price ?? null,
+      direction: prev?.price == null
+        ? (Number(ticker.change) >= 0 ? 'up' : 'dn')
+        : Number(ticker.price) >= Number(prev.price) ? 'up' : 'dn',
+    };
+    updateRealtimeSupportPanel();
+    updateHeaderFromWatchPrice(currentSym);
+    renderWatchlist(watchSymbols, watchPrices, currentSym, selectSym);
+    renderMobileMarketMenu();
+  } catch (err) {
+    console.warn('[Realtime XAU] fast refresh failed:', err);
+  }
+}
+
+function startRealtimePriceFeed() {
+  clearInterval(realtimePriceTimer);
+  refreshRealtimeXauPrice();
+  realtimePriceTimer = setInterval(refreshRealtimeXauPrice, REALTIME_XAU_REFRESH_MS);
+  clearInterval(realtimeTechnicalTimer);
+  refreshRealtimeTechnicalSummary(true);
+  realtimeTechnicalTimer = setInterval(() => refreshRealtimeTechnicalSummary(true), REALTIME_TECHNICAL_REFRESH_MS);
+}
+
+function stopRealtimePriceFeed() {
+  clearInterval(realtimePriceTimer);
+  realtimePriceTimer = null;
+  clearInterval(realtimeTechnicalTimer);
+  realtimeTechnicalTimer = null;
+}
+
+async function refreshRealtimeTechnicalSummary(force = false) {
+  const key = `XAUUSD:${currentTf}`;
+  if (!force && realtimeTechnicalKey === key && realtimeTechnicalSummary) return;
+  if (realtimeTechnicalPending) return;
+
+  realtimeTechnicalPending = true;
+  try {
+    realtimeTechnicalSummary = await getJson(`/api/market/technical-summary?symbol=XAUUSD&interval=${encodeURIComponent(currentTf)}`);
+    realtimeTechnicalKey = key;
+    updateRealtimeSupportPanel();
+  } catch (err) {
+    console.warn('[Realtime Support] technical summary failed:', err);
+  } finally {
+    realtimeTechnicalPending = false;
+  }
+}
+
 function refreshMarketViews() {
   renderWatchlist(watchSymbols, watchPrices, currentSym, selectSym);
   buildTicker(watchSymbols, watchPrices);
   updateHeaderFromWatchPrice(currentSym);
   renderMobileMarketMenu();
+  updateRealtimeSupportPanel();
 }
 
 function escapeHtml(value) {
@@ -291,8 +486,18 @@ function syncMobileTimeframes() {
   });
 }
 
+function syncRealtimeTimeframes() {
+  document.querySelectorAll('.realtime-tf-btn').forEach(button => {
+    button.classList.toggle('active', button.dataset.realtimeTf === currentTf);
+  });
+  const realtimeTf = document.getElementById('realtime-tf');
+  if (realtimeTf) realtimeTf.textContent = currentTf;
+}
+
 function setTimeframe(tf, sourceButton) {
   currentTf = tf;
+  const realtimeTf = document.getElementById('realtime-tf');
+  if (realtimeTf) realtimeTf.textContent = tf;
   document.querySelectorAll('.tf-btn').forEach(button => {
     const text = button.textContent.trim().toLowerCase();
     button.classList.toggle('active', text === tf.toLowerCase());
@@ -301,11 +506,29 @@ function setTimeframe(tf, sourceButton) {
     sourceButton.classList.add('active');
   }
   syncMobileTimeframes();
+  syncRealtimeTimeframes();
 
   if (chartMode === 'xauusd') {
     window.switchToXAU();
   } else {
     mountCryptoTradingView(currentSym);
+  }
+
+  if (currentView === 'realtime') {
+    mountRealtimeXauChart(true);
+  }
+}
+
+function setRealtimeTimeframe(tf) {
+  currentTf = tf;
+  syncRealtimeTimeframes();
+  syncMobileTimeframes();
+  realtimeTechnicalSummary = null;
+  realtimeTechnicalKey = '';
+  updateRealtimeSupportPanel();
+  refreshRealtimeTechnicalSummary(true);
+  if (currentView === 'realtime') {
+    mountRealtimeXauChart(true);
   }
 }
 
@@ -543,7 +766,18 @@ function openUpgradePlans() {
 }
 
 function openSettings() {
+  const theme = getUiTheme();
   openProfileModal('Cài đặt hệ thống', `
+    <div class="modal-info-card settings-row">
+      <div>
+        <div class="modal-info-value">Nền giao diện</div>
+        <div class="modal-info-label">Chọn nền sáng hoặc tối cho toàn bộ terminal.</div>
+      </div>
+      <div class="theme-toggle" role="group" aria-label="Nền giao diện">
+        <button class="theme-toggle-btn ${theme === 'dark' ? 'active' : ''}" data-modal-action="theme" data-theme-option="dark" type="button">Tối</button>
+        <button class="theme-toggle-btn ${theme === 'light' ? 'active' : ''}" data-modal-action="theme" data-theme-option="light" type="button">Sáng</button>
+      </div>
+    </div>
     <div class="modal-info-card settings-row">
       <div>
         <div class="modal-info-value">Thông báo tín hiệu</div>
@@ -665,6 +899,10 @@ async function handleProfileModalClick(event) {
   else if (action === 'verify-telegram') openTelegramAdmin();
   else if (action === 'support-telegram') openTelegramAdmin();
   else if (action === 'submit-password') submitPasswordChange();
+  else if (action === 'theme') {
+    setUiTheme(actionEl.dataset.themeOption);
+    openSettings();
+  }
   else if (action === 'select-plan') {
     const plan = actionEl.dataset.plan;
     if (plan === currentPlan()) return;
@@ -1072,7 +1310,8 @@ async function runSignalAnalysis() {
       const message = err.message === 'Failed to fetch'
         ? 'Không kết nối được backend AI Signal. Hãy chạy node backend/server.js rồi mở http://localhost:3000/login.html để bot lấy dữ liệu XAU/USD và thị trường.'
         : (err.message || err);
-      const isLimitMessage = /cooldown|limit|quota|remaining|het luot|cho them|hết lượt|chờ thêm/i.test(message);
+      const normalizedMessage = String(message).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const isLimitMessage = /cooldown|limit|quota|remaining|het luot|cho them/.test(normalizedMessage);
       loading.innerHTML = `
         <div class="ai-chat-meta"><span>BOT AI SIGNAL</span><span>${isLimitMessage ? 'LIMIT' : 'ERROR'}</span></div>
         <div class="ai-a-text" style="color:${isLimitMessage ? 'var(--yellow)' : 'var(--red)'}">${escapeHtml(isLimitMessage ? message : `Không lấy được dữ liệu để phân tích: ${message}`)}</div>`;
@@ -1098,6 +1337,7 @@ function mountTradingViewChart({ containerId, symbol }) {
   if (!canvas || typeof TradingView === 'undefined') return;
 
   canvas.innerHTML = `<div id="${containerId}" style="width:100%;height:100%"></div>`;
+  const isLightTheme = getUiTheme() === 'light';
 
   new TradingView.widget({
     container_id: containerId,
@@ -1106,17 +1346,17 @@ function mountTradingViewChart({ containerId, symbol }) {
     symbol,
     interval: tvInterval(currentTf),
     timezone: 'Asia/Ho_Chi_Minh',
-    theme: 'dark',
+    theme: isLightTheme ? 'light' : 'dark',
     style: '1',
     locale: 'vi_VN',
-    toolbar_bg: '#070b0f',
+    toolbar_bg: isLightTheme ? '#ffffff' : '#070b0f',
     enable_publishing: false,
     hide_top_toolbar: true,
     hide_side_toolbar: true,
     hide_legend: true,
     save_image: false,
-    backgroundColor: '#070b0f',
-    gridColor: 'rgba(0,200,150,0.05)',
+    backgroundColor: isLightTheme ? '#ffffff' : '#070b0f',
+    gridColor: isLightTheme ? 'rgba(0,92,74,0.08)' : 'rgba(0,200,150,0.05)',
     details: false,
     hotlist: false,
     calendar: false,
@@ -1144,6 +1384,91 @@ function mountTradingViewChart({ containerId, symbol }) {
 
 function renderTradingViewInfo() {
   syncSignalControls();
+}
+
+function mountRealtimeXauChart(force = false) {
+  const container = document.getElementById('realtime-xau-chart');
+  if (!container || typeof TradingView === 'undefined') return;
+  if (realtimeChartMounted && !force) return;
+
+  container.innerHTML = '<div id="realtime-tv-widget-container" style="width:100%;height:100%"></div>';
+  const isLightTheme = getUiTheme() === 'light';
+  new TradingView.widget({
+    container_id: 'realtime-tv-widget-container',
+    width: '100%',
+    height: '100%',
+    symbol: 'OANDA:XAUUSD',
+    interval: tvInterval(currentTf),
+    timezone: 'Asia/Ho_Chi_Minh',
+    theme: isLightTheme ? 'light' : 'dark',
+    style: '1',
+    locale: 'vi_VN',
+    toolbar_bg: isLightTheme ? '#ffffff' : '#070b0f',
+    enable_publishing: false,
+    hide_top_toolbar: true,
+    hide_side_toolbar: true,
+    hide_legend: true,
+    save_image: false,
+    backgroundColor: isLightTheme ? '#ffffff' : '#070b0f',
+    gridColor: isLightTheme ? 'rgba(0,92,74,0.08)' : 'rgba(0,200,150,0.05)',
+    details: false,
+    hotlist: false,
+    calendar: false,
+    disabled_features: [
+      'header_widget',
+      'left_toolbar',
+      'legend_widget',
+      'display_market_status',
+      'symbol_info',
+      'create_volume_indicator_by_default',
+      'volume_force_overlay',
+      'header_symbol_search',
+      'header_compare',
+      'header_indicators',
+      'header_settings',
+      'header_chart_type',
+      'header_interval_dialog_button',
+      'header_undo_redo',
+      'header_screenshot',
+      'header_fullscreen_button',
+      'context_menus',
+    ],
+    studies: [
+      'MASimple@tv-basicstudies',
+      'MAExp@tv-basicstudies',
+      'BB@tv-basicstudies',
+    ],
+  });
+  realtimeChartMounted = true;
+}
+
+function setAppView(view) {
+  currentView = view === 'realtime' ? 'realtime' : 'main';
+  document.body.classList.toggle('view-realtime', currentView === 'realtime');
+  document.querySelectorAll('[data-view-tab]').forEach(button => {
+    button.classList.toggle('active', button.dataset.viewTab === currentView);
+  });
+
+  if (currentView === 'realtime') {
+    document.body.classList.remove('signal-open');
+    syncRealtimeTimeframes();
+    const sbEl = document.getElementById('sb-sym');
+    const candlesEl = document.getElementById('sb-candles');
+    if (sbEl) sbEl.textContent = `XAUUSD · Realtime · ${currentTf}`;
+    if (candlesEl) candlesEl.textContent = 'OANDA · TradingView';
+    mountRealtimeXauChart();
+    startRealtimePriceFeed();
+    refreshRealtimeTechnicalSummary();
+    return;
+  }
+
+  stopRealtimePriceFeed();
+  setHeader({
+    displaySymbol: getWatchLabel(currentSym),
+    statusSymbol: currentSym,
+    marketLabel: chartMode === 'xauusd' ? 'OANDA · TradingView' : 'BINANCE · TradingView',
+  });
+  updateHeaderFromWatchPrice(currentSym);
 }
 
 function mountCryptoTradingView(sym) {
@@ -1278,6 +1603,14 @@ window.addEventListener('load', async () => {
   document.getElementById('signal-panel')?.addEventListener('click', handleSignalPanelClick);
   document.getElementById('signal-drawer-toggle')?.addEventListener('click', () => toggleSignalDrawer(true));
   document.getElementById('signal-panel-close')?.addEventListener('click', () => toggleSignalDrawer(false));
+  document.querySelectorAll('[data-view-tab]').forEach(button => {
+    button.addEventListener('click', () => setAppView(button.dataset.viewTab));
+  });
+  document.getElementById('realtime-tf-row')?.addEventListener('click', event => {
+    const button = event.target.closest('[data-realtime-tf]');
+    if (!button) return;
+    setRealtimeTimeframe(button.dataset.realtimeTf);
+  });
   document.getElementById('ch-sym')?.addEventListener('click', event => {
     event.stopPropagation();
     toggleMobileMarketMenu();
@@ -1302,7 +1635,6 @@ window.addEventListener('load', async () => {
     }
   });
 
-  document.getElementById('xau-btn')?.addEventListener('click', () => window.switchToXAU());
   scheduleUsageNotice();
   window.testBTC = () => selectSym('BTCUSDT');
 });
