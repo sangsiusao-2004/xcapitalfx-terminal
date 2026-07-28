@@ -24,8 +24,8 @@ const MIME_TYPES = {
   '.ico': 'image/x-icon',
 };
 const STATIC_ALIASES = new Map([
-  ['', 'login.html'],
-  ['/', 'login.html'],
+  ['', 'home.html'],
+  ['/', 'home.html'],
   ['/login', 'login.html'],
   ['/auth/login', 'login.html'],
   ['/dang-nhap', 'login.html'],
@@ -39,7 +39,7 @@ const STATIC_ALIASES = new Map([
   ['/dang ky', 'login.html'],
   ['/đăng-ký', 'login.html'],
   ['/đăng ký', 'login.html'],
-  ['/home', 'index.html'],
+  ['/home', 'home.html'],
   ['/home/aidesk', 'index.html'],
   ['/home/chartrealtime', 'index.html'],
   ['/trang-chu', 'index.html'],

@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Xcapital AI — Đăng nhập</title>
 <link rel="icon" type="image/png" href="/assets/favicon.png?v=2">
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Be+Vietnam+Pro:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
   --bg:     #080c10;
   --bg2:    #0d1318;
   --bg3:    #111820;
-  --border: rgba(0,200,150,0.15);
-  --border2:rgba(0,200,150,0.3);
-  --accent: #00c896;
-  --accent2:#00e5b0;
+  --border: rgba(213,168,58,0.15);
+  --border2:rgba(213,168,58,0.3);
+  --accent: #d5a83a;
+  --accent2:#ffe29a;
   --red:    #ff4757;
-  --green:  #00c896;
+  --green:  #d5a83a;
   --text:   #e0f0ea;
-  --muted:  #5a7a70;
-  --mono:   'Share Tech Mono', 'Be Vietnam Pro', monospace;
-  --head:   'Rajdhani', 'Be Vietnam Pro', sans-serif;
-  --body:   'Inter', 'Be Vietnam Pro', sans-serif;
+  --muted:  #786948;
+  --mono:   'DM Sans', 'Inter', sans-serif;
+  --head:   'Space Grotesk', 'DM Sans', sans-serif;
+  --body:   'DM Sans', 'Inter', sans-serif;
 }
 
 body {
@@ -43,8 +43,8 @@ body::before {
   content: '';
   position: fixed; inset: 0;
   background-image:
-    linear-gradient(rgba(0,200,150,0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,200,150,0.03) 1px, transparent 1px);
+    linear-gradient(rgba(213,168,58,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(213,168,58,0.03) 1px, transparent 1px);
   background-size: 40px 40px;
   pointer-events: none; z-index: 0;
 }
@@ -53,7 +53,7 @@ body::after {
   content: '';
   position: fixed;
   width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(0,200,150,0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(213,168,58,0.06) 0%, transparent 70%);
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none; z-index: 0;
@@ -79,12 +79,12 @@ body::after {
   border: 1px solid var(--border2); border-radius: 12px;
   display: inline-flex; align-items: center; justify-content: center;
   margin-bottom: 1rem;
-  background: rgba(0,200,150,0.05);
+  background: rgba(213,168,58,0.05);
   position: relative; overflow: hidden;
 }
 .logo-icon::after {
   content: ''; position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(0,200,150,0.1), transparent);
+  background: linear-gradient(135deg, rgba(213,168,58,0.1), transparent);
 }
 .logo-icon svg { width: 28px; height: 28px; stroke: var(--accent); fill: none; stroke-width: 1.5; }
 .logo-name { font-family: var(--head); font-size: 28px; font-weight: 700; letter-spacing: 3px; color: var(--text); }
@@ -94,7 +94,9 @@ body::after {
 /* Card */
 .card {
   background: var(--bg2); border: 1px solid var(--border);
-  border-radius: 12px; padding: 2rem;
+  border-radius: 20px; padding: 2rem;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.34), 0 0 28px rgba(213,168,58,0.08);
   position: relative; overflow: hidden;
 }
 .card::before {
@@ -102,6 +104,12 @@ body::after {
   background: linear-gradient(90deg, transparent, var(--accent), transparent);
   opacity: 0.6;
 }
+.card::after {
+  content: ''; position: absolute; width: 180px; height: 180px; right: -110px; top: -110px;
+  border-radius: 50%; background: rgba(255,226,154,0.08); filter: blur(18px);
+  pointer-events: none; animation: cardGlow 5s ease-in-out infinite;
+}
+@keyframes cardGlow { 50% { transform: scale(1.25); opacity: 0.65; } }
 
 .card-header { margin-bottom: 1.5rem; }
 .card-title { font-family: var(--head); font-size: 18px; font-weight: 600; letter-spacing: 1px; color: var(--text); margin-bottom: 4px; }
@@ -117,7 +125,7 @@ input[type=text], input[type=email], input[type=password] {
   font-family: var(--mono); font-size: 13px; outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(0,200,150,0.1); }
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(213,168,58,0.1); }
 input::placeholder { color: var(--muted); }
 
 .input-wrap { position: relative; }
@@ -134,23 +142,23 @@ input::placeholder { color: var(--muted); }
 .otp-row input { letter-spacing: 4px; font-weight: 700; }
 .btn-otp {
   white-space: nowrap; flex-shrink: 0;
-  background: rgba(0,200,150,0.08); border: 1px solid var(--border2);
+  background: rgba(213,168,58,0.08); border: 1px solid var(--border2);
   border-radius: 8px; color: var(--accent);
   font-family: var(--mono); font-size: 11px; font-weight: 600;
   padding: 0 14px; cursor: pointer; transition: all 0.2s; min-width: 82px;
 }
-.btn-otp:hover { background: rgba(0,200,150,0.16); }
+.btn-otp:hover { background: rgba(213,168,58,0.16); }
 .btn-otp:disabled { opacity: 0.4; cursor: not-allowed; }
 .otp-countdown { font-family: var(--mono); font-size: 10px; color: var(--muted); text-align: right; margin-top: 4px; min-height: 15px; }
 
 /* Main button */
 .btn-main {
-  width: 100%; background: var(--accent); border: none; border-radius: 8px;
+  width: 100%; background: linear-gradient(135deg, var(--accent2), var(--accent)); border: none; border-radius: 10px;
   padding: 13px; color: #080c10; font-family: var(--head); font-size: 15px;
   font-weight: 700; letter-spacing: 2px; cursor: pointer; margin-top: 0.5rem;
   transition: background 0.2s, transform 0.1s, box-shadow 0.2s; position: relative; overflow: hidden;
 }
-.btn-main:hover { background: var(--accent2); box-shadow: 0 0 20px rgba(0,200,150,0.3); }
+.btn-main:hover { background: linear-gradient(135deg, #fff1bd, var(--accent2)); box-shadow: 0 0 25px rgba(213,168,58,0.38); transform: translateY(-1px); }
 .btn-main:active { transform: scale(0.98); }
 .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -161,8 +169,8 @@ input::placeholder { color: var(--muted); }
   background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.3);
 }
 .alert.show { display: block; }
-.alert.success { background: rgba(0,200,150,0.08); border-color: rgba(0,200,150,0.3); color: var(--accent); }
-.alert.info    { background: rgba(0,200,150,0.05); border-color: rgba(0,200,150,0.2); color: var(--muted); }
+.alert.success { background: rgba(213,168,58,0.08); border-color: rgba(213,168,58,0.3); color: var(--accent); }
+.alert.info    { background: rgba(213,168,58,0.05); border-color: rgba(213,168,58,0.2); color: var(--muted); }
 
 /* Switch link */
 .switch-row { text-align: center; margin-top: 1.2rem; font-family: var(--mono); font-size: 11px; color: var(--muted); }
@@ -178,8 +186,8 @@ input::placeholder { color: var(--muted); }
 #view-login.active, #view-register.active, #view-forgot.active, #view-reset.active { display: block; }
 
 .step-note {
-  background: rgba(0,200,150,0.05);
-  border: 1px solid rgba(0,200,150,0.18);
+  background: rgba(213,168,58,0.05);
+  border: 1px solid rgba(213,168,58,0.18);
   border-radius: 8px;
   color: var(--muted);
   font-family: var(--mono);
@@ -633,3 +641,4 @@ if (/forgot|quen-mat-khau|\/auth\/forgot-password/i.test(window.location.pathnam
 </script>
 </body>
 </html>
+
