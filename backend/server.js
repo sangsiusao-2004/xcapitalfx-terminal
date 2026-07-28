@@ -229,6 +229,12 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
+    if (url.pathname === '/') {
+      res.writeHead(302, { Location: '/home' });
+      res.end();
+      return;
+    }
+
     sendStatic(req, res, url);
   } catch (err) {
     sendError(res, 400, err.message || 'Unexpected server error');
