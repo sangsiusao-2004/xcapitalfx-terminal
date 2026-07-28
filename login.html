@@ -381,7 +381,7 @@ input::placeholder { color: var(--muted); }
 
 
 // ---- Redirect nếu đã đăng nhập ----
-if (sessionStorage.getItem('tx_auth')) window.location.href = '/trang-chu';
+if (sessionStorage.getItem('tx_auth')) window.location.href = '/home/aidesk';
 
 async function postApi(path, body) {
   const controller = new AbortController();
@@ -612,7 +612,7 @@ async function doLogin() {
 function login(user) {
   sessionStorage.setItem('tx_auth', '1');
   sessionStorage.setItem('tx_user', JSON.stringify(user));
-  window.location.href = '/trang-chu';
+  window.location.href = '/home/aidesk';
 }
 
 // ---- Enter key ----
@@ -624,8 +624,11 @@ document.addEventListener('keydown', e => {
   else if (document.getElementById('view-reset').classList.contains('active')) resetPassword();
 });
 
-if (/dang-ky|đăng-ký|đăng%20ký|register/i.test(window.location.pathname)) {
+if (/dang-ky|đăng-ký|đăng%20ký|register|\/auth\/register/i.test(window.location.pathname)) {
   switchView('register');
+}
+if (/forgot|quen-mat-khau|\/auth\/forgot-password/i.test(window.location.pathname)) {
+  switchView('forgot');
 }
 </script>
 </body>

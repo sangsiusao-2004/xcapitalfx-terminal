@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>XCapital AI Signal</title>
 <meta name="description" content="XCapital AI là terminal hỗ trợ theo dõi thị trường, xem biểu đồ TradingView, phân tích đa khung thời gian và lập kế hoạch giao dịch tham khảo bằng AI.">
-<link rel="canonical" href="https://xcapitalfx.net/trang-chu">
+<link rel="canonical" href="https://xcapitalfx.net/home/aidesk">
 <link rel="icon" type="image/png" href="/assets/favicon.png?v=2">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://xcapitalfx.net/trang-chu">
+<meta property="og:url" content="https://xcapitalfx.net/home/aidesk">
 <meta property="og:site_name" content="XCapital AI">
 <meta property="og:title" content="XCapital AI - AI Signal & Trading Terminal">
 <meta property="og:description" content="Theo dõi thị trường, xem biểu đồ realtime, phân tích xu hướng đa khung thời gian và nhận kế hoạch giao dịch tham khảo từ AI Signal. XCapital AI giúp nhà đầu tư đọc dữ liệu rõ hơn, quản trị rủi ro tốt hơn và ra quyết định có kỷ luật hơn.">
@@ -124,10 +124,21 @@ body > * {
   opacity: 0.25;
 }
 .logo-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--head); font-size: 20px; font-weight: 700;
   letter-spacing: 3px; color: var(--text); white-space: nowrap;
 }
 .logo-top span { color: var(--accent); }
+.logo-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: cover;
+  border: 1px solid rgba(0,229,176,0.42);
+  box-shadow: 0 0 14px rgba(0,200,150,0.18);
+}
 .top-sep { width: 1px; height: 24px; background: var(--border2); flex-shrink: 0; }
 .view-switch {
   display: inline-flex;
@@ -338,7 +349,7 @@ body > * {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: #020303 url('assets/user-avatar.png?v=20260604-x-avatar') center / cover no-repeat;
+  background: #020303 url('/assets/user-avatar.png?v=20260604-x-avatar') center / cover no-repeat;
   border: 1px solid rgba(0,229,176,0.45);
   box-shadow: 0 0 16px rgba(0,200,150,0.18);
   color: transparent;
@@ -1859,6 +1870,12 @@ body.view-realtime #realtime-view {
   .logo-top {
     font-size: 16px;
     letter-spacing: 2px;
+    gap: 6px;
+  }
+
+  .logo-mark {
+    width: 22px;
+    height: 22px;
   }
 
   .view-switch {
@@ -2372,7 +2389,7 @@ body.view-realtime #realtime-view {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background: #050607 url('assets/bot-ai-avatar.png?v=20260606-ai-bot') center / cover no-repeat;
+    background: #050607 url('/assets/bot-ai-avatar.png?v=20260606-ai-bot') center / cover no-repeat;
     border: 1px solid rgba(255,211,42,0.78);
     box-shadow: 0 0 18px rgba(255,211,42,0.42), inset 0 0 10px rgba(0,0,0,0.45);
     flex-shrink: 0;
@@ -2447,17 +2464,10 @@ body.view-realtime #realtime-view {
 
 <!-- TOPBAR -->
 <div id="topbar">
-  <div class="logo-top"><span>X</span> Capital</div>
-  <div class="top-sep"></div>
-  <div class="view-switch" aria-label="Chuyển cửa sổ">
-    <button class="view-tab active" data-view-tab="main" type="button" title="Cửa sổ chính">
-      <span class="live-dot"></span>LIVE
-    </button>
-    <button class="view-tab realtime" data-view-tab="realtime" type="button" title="Cửa sổ realtime XAU/USD">
-      ◈ XAU/USD
-    </button>
+  <div class="logo-top">
+    <img class="logo-mark" src="/assets/favicon.png?v=2" alt="XCapital team logo">
+    <span>X</span>Capital
   </div>
-
   <div class="top-sep"></div>
   <div class="top-ticker-strip">
     <div class="ticker-scroll" id="ticker-strip"></div>
@@ -2468,14 +2478,14 @@ body.view-realtime #realtime-view {
 </div>
 
 <!-- WINDOW TABS -->
-<div id="window-tabs" aria-label="Chuyển cửa sổ làm việc">
-  <button class="window-tab active" data-view-tab="main" type="button">
-    <span class="window-tab-title">Cửa sổ hiện tại</span>
-    <span class="window-tab-sub">AI desk / chart hiện tại</span>
+<div id="window-tabs" aria-label="Workspace navigation">
+  <button class="window-tab active" data-view-tab="main" data-view-url="/home/aidesk" type="button">
+    <span class="window-tab-title">AI Desk</span>
+    <span class="window-tab-sub">AI signals and market workspace</span>
   </button>
-  <button class="window-tab realtime" data-view-tab="realtime" type="button">
-    <span class="window-tab-title">Cửa sổ giá realtime</span>
-    <span class="window-tab-sub">Chart realtime + chỉ báo độc quyền</span>
+  <button class="window-tab realtime" data-view-tab="realtime" data-view-url="/home/chartrealtime" type="button">
+    <span class="window-tab-title">Chart Realtime</span>
+    <span class="window-tab-sub">Live XAU/USD chart and indicators</span>
   </button>
 </div>
 
@@ -2844,7 +2854,7 @@ body.view-realtime #realtime-view {
   window.addEventListener('pageshow', () => setTimeout(openNotice, 500));
 })();
 </script>
-<script type="module" src="js/app.js?v=20260608-notice-telegram-support"></script>
+<script type="module" src="/js/app.js?v=20260707-route-assets"></script>
 
 </body>
 </html>

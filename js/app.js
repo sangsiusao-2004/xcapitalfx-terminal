@@ -56,6 +56,28 @@ let realtimeTechnicalKey = '';
 let realtimeTechnicalPending = false;
 let realtimePriceTimer = null;
 
+const VIEW_ROUTES = {
+  main: '/home/aidesk',
+  realtime: '/home/chartrealtime',
+};
+
+function getViewFromPath(pathname = window.location.pathname) {
+  return /\/home\/chartrealtime\/?$/i.test(pathname) ? 'realtime' : 'main';
+}
+
+function updateViewRoute(view, replace = false) {
+  const route = VIEW_ROUTES[view] || VIEW_ROUTES.main;
+  if (window.location.pathname === route) return;
+  const method = replace ? 'replaceState' : 'pushState';
+  window.history[method]({ view }, '', route);
+}
+
+function updateDocumentTitle(view) {
+  document.title = view === 'realtime'
+    ? 'Chart Realtime | XCapitalFX'
+    : 'AI Desk | XCapitalFX';
+}
+
 function getUiTheme() {
   const storedTheme = localStorage.getItem(THEME_KEY);
   return storedTheme === 'light' || storedTheme === 'dark' ? storedTheme : 'dark';
@@ -1442,8 +1464,12 @@ function mountRealtimeXauChart(force = false) {
   realtimeChartMounted = true;
 }
 
-function setAppView(view) {
+function setAppView(view, options = {}) {
   currentView = view === 'realtime' ? 'realtime' : 'main';
+  if (options.syncUrl !== false) {
+    updateViewRoute(currentView, Boolean(options.replace));
+  }
+  updateDocumentTitle(currentView);
   document.body.classList.toggle('view-realtime', currentView === 'realtime');
   document.querySelectorAll('[data-view-tab]').forEach(button => {
     button.classList.toggle('active', button.dataset.viewTab === currentView);
@@ -1556,6 +1582,7 @@ window.addEventListener('load', async () => {
 
   const defaultMarket = watchSymbols.find(w => w.sym === currentSym)?.market || 'crypto';
   selectSym(currentSym, defaultMarket);
+  setAppView(getViewFromPath(), { replace: true });
 
   updateClock();
   setInterval(updateClock, 1000);
@@ -1637,6 +1664,10 @@ window.addEventListener('load', async () => {
 
   scheduleUsageNotice();
   window.testBTC = () => selectSym('BTCUSDT');
+});
+
+window.addEventListener('popstate', () => {
+  setAppView(getViewFromPath(), { syncUrl: false });
 });
 
 window.addEventListener('pageshow', () => {
